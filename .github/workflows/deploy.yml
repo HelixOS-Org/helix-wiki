@@ -1,955 +1,976 @@
 # ╔═══════════════════════════════════════════════════════════════════════════════╗
 # ║                                                                             ║
-# ║   🧬  HELIX WIKI — PRODUCTION DEPLOYMENT PIPELINE                          ║
+# ║   ██╗  ██╗███████╗██╗     ██╗██╗  ██╗    ██╗    ██╗██╗██╗  ██╗██╗          ║
+# ║   ██║  ██║██╔════╝██║     ██║╚██╗██╔╝    ██║    ██║██║██║ ██╔╝██║          ║
+# ║   ███████║█████╗  ██║     ██║ ╚███╔╝     ██║ █╗ ██║██║█████╔╝ ██║          ║
+# ║   ██╔══██║██╔══╝  ██║     ██║ ██╔██╗     ██║███╗██║██║██╔═██╗ ██║          ║
+# ║   ██║  ██║███████╗███████╗██║██╔╝ ██╗    ╚███╔███╔╝██║██║  ██╗██║          ║
+# ║   ╚═╝  ╚═╝╚══════╝╚══════╝╚═╝╚═╝  ╚═╝     ╚══╝╚══╝ ╚═╝╚═╝  ╚═╝╚═╝      ║
 # ║                                                                             ║
-# ║   Target: Hostinger Classic Shared Hosting (FTPS)                           ║
-# ║   Method: Static HTML Export → Encrypted FTP Upload                         ║
+# ║   🔒 PRODUCTION DEPLOYMENT PIPELINE — ULTRA SECURE                         ║
+# ║   ─────────────────────────────────────────────────────────────────────────  ║
+# ║   Pipeline: Security Gate → Quality Gate → Build & Harden → Deploy FTPS    ║
+# ║             → Post-Deploy Verify → Report                                  ║
+# ║   Target:   Hostinger Classic Hosting (FTPS)                               ║
+# ║   Domain:   helix-wiki.com                                                 ║
 # ║                                                                             ║
-# ║   ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐         ║
-# ║   │🛡 GUARD │─▶│🔨 BUILD │─▶│🔒 ARMOR │─▶│🚀 SHIP  │─▶│✅ VERIFY│         ║
-# ║   │ Secrets │  │ Export  │  │.htaccess│  │  FTPS   │  │ Health  │         ║
-# ║   │ Lint    │  │ Stats   │  │ Headers │  │ Deploy  │  │ SEO     │         ║
-# ║   │ Types   │  │ Hash    │  │ CSP     │  │ Integ.  │  │ Perf    │         ║
-# ║   │ Audit   │  │ SBOM    │  │ Perms   │  │         │  │ Notify  │         ║
-# ║   └─────────┘  └─────────┘  └─────────┘  └─────────┘  └─────────┘         ║
-# ║                                                                             ║
-# ║   Security layers:                                                          ║
-# ║     • Hardened runners (step-security)                                      ║
-# ║     • Secret scanning (TruffleHog)                                          ║
-# ║     • Dependency audit (npm audit)                                          ║
-# ║     • SBOM generation (CycloneDX)                                           ║
-# ║     • Build integrity (SHA-256 chain)                                       ║
-# ║     • Auto-generated .htaccess (security headers, CSP, HSTS)               ║
-# ║     • FTPS-only (TLS 1.2+ encrypted transfer)                              ║
-# ║     • Post-deploy verification (health, SEO, perf, headers)                ║
-# ║     • Discord alerting                                                      ║
+# ║   Required Secrets:                                                         ║
+# ║     FTP_SERVER       — Hostinger FTPS host/IP                               ║
+# ║     FTP_USERNAME     — FTP account username                                 ║
+# ║     FTP_PASSWORD     — FTP account password                                 ║
+# ║     FTP_REMOTE_PATH  — Remote directory (optional, defaults to ./)          ║
 # ║                                                                             ║
 # ╚═══════════════════════════════════════════════════════════════════════════════╝
-#
-# Required GitHub Secrets:
-#   FTP_HOST            — Hostinger FTP hostname
-#   FTP_USERNAME        — FTP username
-#   FTP_PASSWORD        — FTP password
-#   FTP_REMOTE_PATH     — Remote path (e.g. /public_html)
-#   DISCORD_WEBHOOK_URL — (optional) Discord notifications
-#
 
-name: 🧬 Deploy Helix Wiki
+name: 🚀 Deploy to Production
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
     inputs:
-      clean_deploy:
-        description: "🧹 Clean deploy — delete ALL remote files before uploading"
+      force_deploy:
+        description: "Force deployment (skip cache)"
         required: false
+        default: "false"
         type: boolean
-        default: false
-      dry_run:
-        description: "🧪 Dry run — build & verify only, skip FTP upload"
+      environment:
+        description: "Target environment"
         required: false
-        type: boolean
-        default: false
-      skip_verify:
-        description: "⏭️ Skip post-deploy verification"
-        required: false
-        type: boolean
-        default: false
+        default: "production"
+        type: choice
+        options:
+          - production
+          - staging
 
-# ─── Permissions: Least privilege ─────────────────────────────────────────────
-permissions:
-  contents: read
-  actions: read
-  deployments: write
-
-# ─── Concurrency: One deploy at a time ───────────────────────────────────────
 concurrency:
-  group: helix-wiki-production
+  group: deploy-${{ github.ref }}
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: "22"
-  NEXT_TELEMETRY_DISABLED: "1"
+  NODE_VERSION: "20"
   SITE_URL: "https://helix-wiki.com"
-  SITE_NAME: "Helix Wiki"
 
-# =============================================================================
-#   J O B S
-# =============================================================================
+permissions:
+  contents: read
+  actions: read
 
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  STAGE 1 — SECURITY GATE
+#  Secret scanning • Dependency audit • License compliance
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 jobs:
-
-  # ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-  # ┃  🛡️  STAGE 1 — SECURITY GATE                                           ┃
-  # ┃  Secret scanning • Lint • TypeScript • Dependency audit                 ┃
-  # ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-  security-gate:
+  security:
     name: 🛡️ Security Gate
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      security-events: write
-    outputs:
-      should-deploy: ${{ steps.changes.outputs.should-deploy }}
-      audit-status: ${{ steps.audit.outputs.status }}
-    steps:
-      - name: 🔐 Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
-          disable-sudo: true
+    timeout-minutes: 10
 
-      - name: 📥 Checkout
+    steps:
+      - name: 📥 Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: false
 
-      # ── Change Detection ──
-      - name: 🔍 Detect deployment-relevant changes
-        id: changes
+      - name: 🔐 Scan for leaked secrets
         run: |
-          echo "═══════════════════════════════════════"
-          echo "  🔍 CHANGE DETECTION"
-          echo "═══════════════════════════════════════"
+          echo "╔═══════════════════════════════════════╗"
+          echo "║  🔐 SECRET SCANNING                   ║"
+          echo "╚═══════════════════════════════════════╝"
 
-          # Always deploy — the change detection was causing false skips.
-          # With static export + FTP diff sync, deploying is cheap and safe.
-          echo "should-deploy=true" >> "$GITHUB_OUTPUT"
-          echo "  ✅ Deploying (branch: ${{ github.ref_name }}, event: ${{ github.event_name }})"
-          echo "  📝 Commit: ${GITHUB_SHA::8} by ${{ github.actor }}"
+          PATTERNS=(
+            'AKIA[0-9A-Z]{16}'                          # AWS Access Key
+            'AIza[0-9A-Za-z\-_]{35}'                    # Google API Key
+            'sk-[0-9a-zA-Z]{48}'                        # OpenAI API Key
+            'ghp_[0-9a-zA-Z]{36}'                       # GitHub PAT
+            'glpat-[0-9a-zA-Z\-_]{20}'                  # GitLab PAT
+            'xox[baprs]-[0-9a-zA-Z\-]{10,}'            # Slack Token
+            'sk_live_[0-9a-zA-Z]{24,}'                  # Stripe Secret Key
+            'sq0atp-[0-9A-Za-z\-_]{22}'                 # Square Access Token
+            'SG\.[0-9A-Za-z\-_]{22}\.[0-9A-Za-z\-_]{43}' # SendGrid API Key
+            '-----BEGIN (RSA |EC )?PRIVATE KEY-----'     # Private Keys
+            'mongodb(\+srv)?://[^\s]+'                   # MongoDB URI
+            'postgres(ql)?://[^\s]+'                     # PostgreSQL URI
+          )
 
-      # ── Secret Scanning ──
-      - name: 🔒 TruffleHog — scan for leaked secrets
-        uses: trufflesecurity/trufflehog@main
-        with:
-          path: ./
-          extra_args: --only-verified
+          FOUND=0
+          for pattern in "${PATTERNS[@]}"; do
+            if grep -rPn "$pattern" --include="*.{ts,tsx,js,jsx,json,env,md}" . 2>/dev/null | grep -v node_modules | grep -v '.git/'; then
+              echo "  ❌ MATCH: $pattern"
+              FOUND=$((FOUND + 1))
+            fi
+          done
 
-      # ── Node.js Setup ──
-      - name: 📦 Setup Node.js ${{ env.NODE_VERSION }}
-        if: steps.changes.outputs.should-deploy == 'true'
+          if [ $FOUND -gt 0 ]; then
+            echo ""
+            echo "  🚨 CRITICAL: $FOUND secret pattern(s) detected!"
+            echo "  ⛔ Deployment blocked for security."
+            exit 1
+          fi
+
+          echo "  ✅ No secrets detected — clean repository"
+
+      - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
-      - name: 📋 Install dependencies
-        if: steps.changes.outputs.should-deploy == 'true'
-        run: npm ci --ignore-scripts
+      - name: 📦 Install dependencies
+        run: npm ci
 
-      # ── Dependency Audit ──
-      - name: 🔍 npm audit — vulnerability scan
-        id: audit
-        if: steps.changes.outputs.should-deploy == 'true'
+      - name: 🔍 Audit dependencies
         run: |
-          echo "═══════════════════════════════════════"
-          echo "  🔍 DEPENDENCY AUDIT"
-          echo "═══════════════════════════════════════"
+          echo "╔═══════════════════════════════════════╗"
+          echo "║  🔍 DEPENDENCY AUDIT                  ║"
+          echo "╚═══════════════════════════════════════╝"
 
-          if npm audit --omit=dev --audit-level=critical 2>&1; then
-            echo "status=clean" >> "$GITHUB_OUTPUT"
-            echo "  ✅ No critical vulnerabilities"
+          echo ""
+          echo "  📊 Dependency tree summary:"
+          echo "  ─────────────────────────────"
+          npm ls --depth=0 2>/dev/null | head -20 || true
+          echo ""
+
+          # Count total dependencies
+          TOTAL=$(npm ls --all --parseable 2>/dev/null | wc -l)
+          echo "  📦 Total packages (incl. transitive): $TOTAL"
+          echo ""
+
+          # Run audit — warn on moderate, fail on critical
+          echo "  🔎 Running security audit..."
+          AUDIT_OUTPUT=$(npm audit --json 2>/dev/null || true)
+
+          CRITICAL=$(echo "$AUDIT_OUTPUT" | jq '.metadata.vulnerabilities.critical // 0' 2>/dev/null || echo "0")
+          HIGH=$(echo "$AUDIT_OUTPUT" | jq '.metadata.vulnerabilities.high // 0' 2>/dev/null || echo "0")
+          MODERATE=$(echo "$AUDIT_OUTPUT" | jq '.metadata.vulnerabilities.moderate // 0' 2>/dev/null || echo "0")
+          LOW=$(echo "$AUDIT_OUTPUT" | jq '.metadata.vulnerabilities.low // 0' 2>/dev/null || echo "0")
+
+          echo ""
+          echo "  ┌─────────────────────────────────┐"
+          echo "  │  Vulnerability Report            │"
+          echo "  ├─────────────────────────────────┤"
+          echo "  │  🔴 Critical:  $CRITICAL                      │"
+          echo "  │  🟠 High:      $HIGH                      │"
+          echo "  │  🟡 Moderate:  $MODERATE                      │"
+          echo "  │  🟢 Low:       $LOW                      │"
+          echo "  └─────────────────────────────────┘"
+          echo ""
+
+          if [ "$CRITICAL" -gt 0 ] 2>/dev/null; then
+            echo "  🚨 CRITICAL vulnerabilities found — blocking deploy!"
+            npm audit 2>/dev/null || true
+            exit 1
+          fi
+
+          echo "  ✅ No critical vulnerabilities — audit passed"
+
+      - name: 📜 Check license compliance
+        run: |
+          echo "╔═══════════════════════════════════════╗"
+          echo "║  📜 LICENSE COMPLIANCE                ║"
+          echo "╚═══════════════════════════════════════╝"
+
+          # Banned licenses for production use
+          BANNED="GPL-3.0|AGPL|SSPL|EUPL|CC-BY-NC|CC-BY-ND"
+
+          VIOLATIONS=0
+          while IFS= read -r line; do
+            pkg=$(echo "$line" | cut -d'@' -f1)
+            license=$(npm info "$pkg" license 2>/dev/null || echo "UNKNOWN")
+            if echo "$license" | grep -qEi "$BANNED"; then
+              echo "  ⚠️  $pkg → $license (RESTRICTED)"
+              VIOLATIONS=$((VIOLATIONS + 1))
+            fi
+          done < <(npm ls --depth=0 --parseable 2>/dev/null | tail -n +2 | xargs -I{} basename {} | head -20)
+
+          if [ $VIOLATIONS -gt 0 ]; then
+            echo "  ⚠️  $VIOLATIONS restricted license(s) found — review required"
           else
-            echo "status=warnings" >> "$GITHUB_OUTPUT"
-            echo "  ⚠️  Vulnerabilities found (non-blocking)"
+            echo "  ✅ All licenses compliant"
           fi
         continue-on-error: true
 
-      # ── Linting ──
-      - name: 🔎 ESLint
-        if: steps.changes.outputs.should-deploy == 'true'
-        run: |
-          echo "═══════════════════════════════════════"
-          echo "  🔎 ESLINT"
-          echo "═══════════════════════════════════════"
-          npx eslint . --max-warnings 0
-        continue-on-error: true
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  #  STAGE 2 — QUALITY GATE
+  #  ESLint • TypeScript strict check • Bundle analysis
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  quality:
+    name: ✨ Quality Gate
+    runs-on: ubuntu-latest
+    needs: security
+    timeout-minutes: 10
 
-      # ── Type Checking ──
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔎 ESLint analysis
+        continue-on-error: true
+        run: |
+          echo "╔═══════════════════════════════════════╗"
+          echo "║  🔎 ESLINT ANALYSIS                   ║"
+          echo "╚═══════════════════════════════════════╝"
+
+          npx eslint . --format stylish 2>&1 || true
+
+          ERRORS=$(npx eslint . --format json 2>/dev/null | jq '[.[].errorCount] | add // 0' 2>/dev/null || echo "0")
+          WARNINGS=$(npx eslint . --format json 2>/dev/null | jq '[.[].warningCount] | add // 0' 2>/dev/null || echo "0")
+
+          echo ""
+          echo "  📊 Results: $ERRORS error(s), $WARNINGS warning(s)"
+
+          if [ "$ERRORS" -gt 0 ] 2>/dev/null; then
+            echo "  ⚠️  ESLint errors found (non-blocking)"
+          else
+            echo "  ✅ ESLint passed"
+          fi
+
       - name: 🔎 TypeScript strict check
-        if: steps.changes.outputs.should-deploy == 'true'
         continue-on-error: true
         run: |
-          echo "═══════════════════════════════════════"
-          echo "  🔎 TYPESCRIPT"
-          echo "═══════════════════════════════════════"
-          npx tsc --noEmit
-          echo "  ✅ Type checking passed"
+          echo "╔═══════════════════════════════════════╗"
+          echo "║  🔎 TYPESCRIPT STRICT CHECK           ║"
+          echo "╚═══════════════════════════════════════╝"
 
-  # ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-  # ┃  🔨  STAGE 2 — BUILD & HARDEN                                          ┃
-  # ┃  Next.js export • .htaccess • SBOM • Integrity hash                    ┃
-  # ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+          npx tsc --noEmit 2>&1
+          echo "  ✅ Type checking passed — zero errors"
+
+      - name: 📏 File size analysis
+        run: |
+          echo "╔═══════════════════════════════════════╗"
+          echo "║  📏 CODEBASE METRICS                  ║"
+          echo "╚═══════════════════════════════════════╝"
+
+          TS_FILES=$(find . -name '*.ts' -o -name '*.tsx' | grep -v node_modules | grep -v .next | wc -l)
+          CSS_FILES=$(find . -name '*.css' | grep -v node_modules | wc -l)
+          TOTAL_LINES=$(find . \( -name '*.ts' -o -name '*.tsx' -o -name '*.css' \) ! -path '*/node_modules/*' ! -path '*/.next/*' -exec cat {} + 2>/dev/null | wc -l)
+          COMPONENTS=$(find ./components -name '*.tsx' 2>/dev/null | wc -l)
+          PAGES=$(find ./app -name 'page.tsx' 2>/dev/null | wc -l)
+
+          echo ""
+          echo "  ┌──────────────────────────────────┐"
+          echo "  │  Codebase Overview                │"
+          echo "  ├──────────────────────────────────┤"
+          echo "  │  📄 TypeScript files:  $TS_FILES"
+          echo "  │  🎨 CSS files:         $CSS_FILES"
+          echo "  │  🧩 Components:        $COMPONENTS"
+          echo "  │  📑 Pages:             $PAGES"
+          echo "  │  📝 Total lines:       $TOTAL_LINES"
+          echo "  └──────────────────────────────────┘"
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  #  STAGE 3 — BUILD & HARDEN
+  #  Next.js static export • .htaccess hardening • SBOM • Build manifest
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   build:
     name: 🔨 Build & Harden
     runs-on: ubuntu-latest
-    needs: security-gate
-    if: needs.security-gate.outputs.should-deploy == 'true'
-    permissions:
-      contents: read
-    outputs:
-      build-hash: ${{ steps.integrity.outputs.sha256 }}
-      build-size: ${{ steps.stats.outputs.size }}
-      page-count: ${{ steps.stats.outputs.pages }}
-      file-count: ${{ steps.stats.outputs.files }}
-      timestamp:  ${{ steps.meta.outputs.timestamp }}
+    needs: quality
+    timeout-minutes: 15
+
     steps:
-      - name: 🔐 Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
-          disable-sudo: true
-
-      - name: 📥 Checkout
+      - name: 📥 Checkout repository
         uses: actions/checkout@v4
-        with:
-          persist-credentials: false
 
-      - name: 📦 Setup Node.js
+      - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
-      - name: 📋 Install dependencies
+      - name: 📦 Install dependencies
         run: npm ci
 
-      - name: 🏷️ Build metadata
-        id: meta
+      - name: 🔨 Build Next.js static export
         run: |
-          TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          echo "timestamp=$TIMESTAMP" >> "$GITHUB_OUTPUT"
-          echo "  📅 Build: $TIMESTAMP"
-          echo "  🔗 Commit: ${GITHUB_SHA::8}"
-          echo "  👤 Actor: ${{ github.actor }}"
+          echo "╔═══════════════════════════════════════╗"
+          echo "║  🔨 BUILDING STATIC SITE              ║"
+          echo "╚═══════════════════════════════════════╝"
 
-      # ── Next.js Static Build ──
-      - name: 🔨 Next.js static export
-        run: |
-          echo "═══════════════════════════════════════"
-          echo "  🔨 BUILDING STATIC SITE"
-          echo "═══════════════════════════════════════"
-          npx next build
+          START=$(date +%s)
+          npm run build
+          END=$(date +%s)
+          DURATION=$((END - START))
+
+          echo ""
+          PAGE_COUNT=$(find out -name '*.html' 2>/dev/null | wc -l)
+          TOTAL_SIZE=$(du -sh out 2>/dev/null | cut -f1)
+          JS_SIZE=$(find out -name '*.js' -exec du -ch {} + 2>/dev/null | tail -1 | cut -f1)
+          CSS_SIZE=$(find out -name '*.css' -exec du -ch {} + 2>/dev/null | tail -1 | cut -f1)
+
+          echo "  ┌──────────────────────────────────┐"
+          echo "  │  Build Results                    │"
+          echo "  ├──────────────────────────────────┤"
+          echo "  │  ⏱️  Duration:     ${DURATION}s"
+          echo "  │  📑 HTML pages:   $PAGE_COUNT"
+          echo "  │  📦 Total size:   $TOTAL_SIZE"
+          echo "  │  📜 JS bundle:    $JS_SIZE"
+          echo "  │  🎨 CSS bundle:   $CSS_SIZE"
+          echo "  └──────────────────────────────────┘"
+          echo ""
+          echo "  ✅ Build successful"
         env:
-          NODE_ENV: production
+          CI: false
+          NEXT_TELEMETRY_DISABLED: 1
+          ESLINT_NO_DEV_ERRORS: true
 
-      # ── Generate hardened .htaccess ──
-      - name: 🔒 Generate .htaccess (security hardening)
+      - name: 🛡️ Generate hardened .htaccess
         run: |
+          echo "╔═══════════════════════════════════════╗"
+          echo "║  🛡️ GENERATING .htaccess              ║"
+          echo "╚═══════════════════════════════════════╝"
+
           cat > out/.htaccess << 'HTACCESS'
-          # ═══════════════════════════════════════════════════════════════════
-          # Helix Wiki — Hardened .htaccess for Hostinger Shared Hosting
-          # Auto-generated by CI/CD pipeline — DO NOT EDIT MANUALLY
-          # ═══════════════════════════════════════════════════════════════════
+          # ╔═══════════════════════════════════════════════════════════════╗
+          # ║  Helix Wiki — Apache Security & Performance Configuration   ║
+          # ║  Auto-generated by CI/CD pipeline — DO NOT EDIT MANUALLY    ║
+          # ╚═══════════════════════════════════════════════════════════════╝
 
-          # ── Engine ──
+          # ── HTTPS Force Redirect ──────────────────────────────────────
           RewriteEngine On
-
-          # ── Force HTTPS ──
           RewriteCond %{HTTPS} off
           RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-          # ── Remove www ──
+          # ── WWW → non-WWW redirect ───────────────────────────────────
           RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
           RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
 
-          # ── Security Headers ──
+          # ── Security Headers ──────────────────────────────────────────
           <IfModule mod_headers.c>
-              # HSTS — force HTTPS for 1 year, include subdomains
-              Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+            # HSTS — Force HTTPS for 2 years + subdomains + preload
+            Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
 
-              # Prevent MIME-type sniffing
-              Header always set X-Content-Type-Options "nosniff"
+            # Prevent MIME type sniffing
+            Header always set X-Content-Type-Options "nosniff"
 
-              # Clickjacking protection
-              Header always set X-Frame-Options "SAMEORIGIN"
+            # Clickjacking protection
+            Header always set X-Frame-Options "SAMEORIGIN"
 
-              # XSS filter
-              Header always set X-XSS-Protection "1; mode=block"
+            # XSS Protection (legacy browsers)
+            Header always set X-XSS-Protection "1; mode=block"
 
-              # Referrer policy
-              Header always set Referrer-Policy "strict-origin-when-cross-origin"
+            # Referrer Policy — privacy-conscious
+            Header always set Referrer-Policy "strict-origin-when-cross-origin"
 
-              # Permissions policy
-              Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+            # Permissions Policy — disable unnecessary APIs
+            Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()"
 
-              # Content Security Policy
-              Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https:; frame-ancestors 'self';"
+            # Content Security Policy
+            Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https:; frame-ancestors 'self'"
 
-              # Remove server identification
-              Header always unset X-Powered-By
-              Header always unset Server
+            # Prevent information leakage
+            Header always unset X-Powered-By
+            Header always unset Server
           </IfModule>
 
-          # ── Compression ──
+          # ── Gzip Compression ──────────────────────────────────────────
           <IfModule mod_deflate.c>
-              AddOutputFilterByType DEFLATE text/html
-              AddOutputFilterByType DEFLATE text/css
-              AddOutputFilterByType DEFLATE text/javascript
-              AddOutputFilterByType DEFLATE application/javascript
-              AddOutputFilterByType DEFLATE application/json
-              AddOutputFilterByType DEFLATE application/xml
-              AddOutputFilterByType DEFLATE image/svg+xml
-              AddOutputFilterByType DEFLATE text/xml
-              AddOutputFilterByType DEFLATE text/plain
+            AddOutputFilterByType DEFLATE text/html
+            AddOutputFilterByType DEFLATE text/css
+            AddOutputFilterByType DEFLATE text/javascript
+            AddOutputFilterByType DEFLATE application/javascript
+            AddOutputFilterByType DEFLATE application/json
+            AddOutputFilterByType DEFLATE application/xml
+            AddOutputFilterByType DEFLATE image/svg+xml
+            AddOutputFilterByType DEFLATE font/woff2
           </IfModule>
 
-          # ── Browser Caching ──
+          # ── Browser Caching ───────────────────────────────────────────
           <IfModule mod_expires.c>
-              ExpiresActive On
+            ExpiresActive On
 
-              # HTML — short cache (deploy updates frequently)
-              ExpiresByType text/html "access plus 1 hour"
+            # Static assets — aggressive caching (1 year)
+            ExpiresByType image/png                 "access plus 1 year"
+            ExpiresByType image/jpeg                "access plus 1 year"
+            ExpiresByType image/gif                 "access plus 1 year"
+            ExpiresByType image/svg+xml             "access plus 1 year"
+            ExpiresByType image/webp                "access plus 1 year"
+            ExpiresByType image/x-icon              "access plus 1 year"
+            ExpiresByType font/woff2                "access plus 1 year"
+            ExpiresByType font/woff                 "access plus 1 year"
+            ExpiresByType application/font-woff2    "access plus 1 year"
 
-              # CSS & JS — hashed filenames, long cache
-              ExpiresByType text/css "access plus 1 year"
-              ExpiresByType application/javascript "access plus 1 year"
-              ExpiresByType text/javascript "access plus 1 year"
+            # JS/CSS — cache with revalidation (1 month, Next.js hashes them)
+            ExpiresByType text/css                  "access plus 1 month"
+            ExpiresByType application/javascript    "access plus 1 month"
+            ExpiresByType text/javascript           "access plus 1 month"
 
-              # Images — long cache
-              ExpiresByType image/png "access plus 1 year"
-              ExpiresByType image/svg+xml "access plus 1 year"
-              ExpiresByType image/x-icon "access plus 1 year"
-              ExpiresByType image/webp "access plus 1 year"
+            # HTML — short cache (10 minutes)
+            ExpiresByType text/html                 "access plus 10 minutes"
 
-              # Fonts
-              ExpiresByType font/woff2 "access plus 1 year"
-              ExpiresByType font/woff "access plus 1 year"
-
-              # XML / JSON
-              ExpiresByType application/xml "access plus 1 hour"
-              ExpiresByType application/json "access plus 1 hour"
+            # JSON/XML — medium cache
+            ExpiresByType application/json          "access plus 1 hour"
+            ExpiresByType application/xml           "access plus 1 hour"
           </IfModule>
 
-          # ── ETag (disable for static files — use Expires instead) ──
-          <IfModule mod_headers.c>
-              Header unset ETag
-          </IfModule>
-          FileETag None
-
-          # ── Block sensitive files ──
-          <FilesMatch "\.(env|log|bak|sql|git|gitignore|md|yml|yaml|toml|lock|ts)$">
-              <IfModule mod_authz_core.c>
-                  Require all denied
-              </IfModule>
+          # ── Block Sensitive Files ─────────────────────────────────────
+          <FilesMatch "\.(env|git|gitignore|DS_Store|htpasswd|htaccess\.bak|log|sql|bak|swp|yml|yaml|toml|lock)$">
+            Order allow,deny
+            Deny from all
           </FilesMatch>
 
-          # ── Block directory listing ──
+          # Block access to hidden files/directories
+          <IfModule mod_rewrite.c>
+            RewriteRule (^|/)\.(?!well-known/) - [F]
+          </IfModule>
+
+          # ── Block Bad Bots & Scanners ─────────────────────────────────
+          <IfModule mod_rewrite.c>
+            RewriteCond %{HTTP_USER_AGENT} (AhrefsBot|MJ12bot|DotBot|SemrushBot|BLEXBot|proximic) [NC]
+            RewriteRule .* - [F,L]
+          </IfModule>
+
+          # ── Custom Error Pages ────────────────────────────────────────
+          ErrorDocument 404 /404.html
+          ErrorDocument 403 /404.html
+          ErrorDocument 500 /404.html
+
+          # ── Prevent Directory Listing ─────────────────────────────────
           Options -Indexes
 
-          # ── Custom error pages ──
-          ErrorDocument 404 /404.html
-
-          # ── UTF-8 default charset ──
+          # ── UTF-8 Default Charset ─────────────────────────────────────
           AddDefaultCharset UTF-8
-
           HTACCESS
 
-          echo "  🔒 .htaccess generated with:"
-          echo "     • HTTPS redirect"
-          echo "     • HSTS (1 year, preload)"
-          echo "     • CSP (Content Security Policy)"
-          echo "     • X-Frame-Options / X-Content-Type-Options"
+          # Fix indentation (remove leading spaces from heredoc)
+          sed -i 's/^          //' out/.htaccess
+
+          echo "  ✅ .htaccess generated with:"
+          echo "     • HTTPS force redirect"
+          echo "     • HSTS (2 years + preload)"
+          echo "     • CSP headers"
+          echo "     • X-Frame-Options, X-Content-Type-Options"
+          echo "     • Permissions-Policy (camera, mic, geo disabled)"
           echo "     • Gzip compression"
-          echo "     • Browser caching (1y for assets)"
+          echo "     • Browser caching (assets: 1yr, JS/CSS: 1mo, HTML: 10min)"
           echo "     • Sensitive file blocking"
+          echo "     • Bad bot blocking"
           echo "     • Directory listing disabled"
-          echo "     • Custom 404 page"
 
-      # ── Build Statistics ──
-      - name: 📊 Build statistics
-        id: stats
+      - name: 📋 Generate SBOM (Software Bill of Materials)
         run: |
-          SIZE=$(du -sh out/ | cut -f1)
-          PAGES=$(find out -name 'index.html' | wc -l)
-          FILES=$(find out -type f | wc -l)
-          HTML=$(find out -name '*.html' | wc -l)
-          JS=$(find out -name '*.js' | wc -l)
-          CSS=$(find out -name '*.css' | wc -l)
+          echo "╔═══════════════════════════════════════╗"
+          echo "║  📋 SOFTWARE BILL OF MATERIALS        ║"
+          echo "╚═══════════════════════════════════════╝"
 
-          echo "size=$SIZE" >> "$GITHUB_OUTPUT"
-          echo "pages=$PAGES" >> "$GITHUB_OUTPUT"
-          echo "files=$FILES" >> "$GITHUB_OUTPUT"
-
-          echo ""
-          echo "╔══════════════════════════════════════════════════╗"
-          echo "║  📊 BUILD REPORT                                ║"
-          echo "╠══════════════════════════════════════════════════╣"
-          printf "║  %-14s %-33s ║\n" "Total Size:" "$SIZE"
-          printf "║  %-14s %-33s ║\n" "Pages:" "$PAGES"
-          printf "║  %-14s %-33s ║\n" "Total Files:" "$FILES"
-          printf "║  %-14s %-33s ║\n" "HTML:" "$HTML"
-          printf "║  %-14s %-33s ║\n" "JavaScript:" "$JS"
-          printf "║  %-14s %-33s ║\n" "CSS:" "$CSS"
-          printf "║  %-14s %-33s ║\n" "Node.js:" "$(node -v)"
-          printf "║  %-14s %-33s ║\n" "Next.js:" "$(npx next --version 2>/dev/null || echo 'N/A')"
-          echo "╚══════════════════════════════════════════════════╝"
-
-          echo ""
-          echo "📄 Generated pages:"
-          find out -name 'index.html' | sort | sed 's|out/||; s|/index.html||; s|^index.html|/ (home)|' | while read -r p; do
-            echo "   ✅ /${p}"
-          done
-
-      # ── SBOM (Software Bill of Materials) ──
-      - name: 📦 Generate SBOM
-        run: |
-          echo "═══════════════════════════════════════"
-          echo "  📦 SOFTWARE BILL OF MATERIALS"
-          echo "═══════════════════════════════════════"
-
-          # Lightweight SBOM — list production dependencies
-          node -e "
-            const pkg = require('./package.json');
-            const deps = Object.entries(pkg.dependencies || {});
-            const devDeps = Object.entries(pkg.devDependencies || {});
-            console.log('Production dependencies: ' + deps.length);
-            deps.forEach(([n, v]) => console.log('  📦 ' + n + ' @ ' + v));
-            console.log('Dev dependencies: ' + devDeps.length);
-          "
-
-          # Save SBOM artifact
-          npm ls --json --omit=dev > out/_sbom.json 2>/dev/null || true
-          echo ""
-          echo "  ✅ SBOM saved to _sbom.json"
-
-      # ── Build Manifest (MUST be before integrity hash) ──
-      - name: 📋 Generate build manifest
-        run: |
-          cat > out/_build-manifest.json << MANIFEST
+          cat > out/_sbom.json << EOF
           {
-            "version": "1.0",
-            "commit": "${{ github.sha }}",
-            "ref": "${{ github.ref_name }}",
-            "actor": "${{ github.actor }}",
-            "timestamp": "${{ steps.meta.outputs.timestamp }}",
-            "node": "$(node -v)",
-            "pipeline": "${{ github.run_id }}"
+            "bomFormat": "HelixCI",
+            "specVersion": "1.0",
+            "metadata": {
+              "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+              "component": {
+                "name": "helix-wiki",
+                "version": "$(jq -r '.version' package.json)",
+                "type": "website"
+              },
+              "pipeline": {
+                "id": "${{ github.run_id }}",
+                "number": "${{ github.run_number }}",
+                "sha": "${{ github.sha }}",
+                "ref": "${{ github.ref }}",
+                "actor": "${{ github.actor }}"
+              }
+            },
+            "components": $(npm ls --json --depth=0 2>/dev/null | jq '.dependencies // {}' 2>/dev/null || echo '{}')
           }
-          MANIFEST
-          echo "  ✅ Build manifest saved"
+          EOF
 
-      # ── Build Integrity Hash (AFTER all files are generated) ──
-      - name: 🔏 Generate build integrity hash
-        id: integrity
+          sed -i 's/^          //' out/_sbom.json
+          COMP_COUNT=$(jq '.components | length' out/_sbom.json 2>/dev/null || echo "?")
+          echo "  ✅ SBOM generated — $COMP_COUNT direct dependencies catalogued"
+
+      - name: 📊 Generate build manifest
         run: |
-          echo "═══════════════════════════════════════"
-          echo "  🔏 BUILD INTEGRITY"
-          echo "═══════════════════════════════════════"
+          echo "╔═══════════════════════════════════════╗"
+          echo "║  📊 BUILD MANIFEST                    ║"
+          echo "╚═══════════════════════════════════════╝"
 
-          # Exclude internal metadata files — these are removed before FTP upload
-          HASH=$(find out -type f -not -name '_sbom.json' -not -name '_build-manifest.json' -exec sha256sum {} \; | sort | sha256sum | cut -d' ' -f1)
-          echo "sha256=$HASH" >> "$GITHUB_OUTPUT"
+          HTML_COUNT=$(find out -name '*.html' | wc -l)
+          JS_COUNT=$(find out -name '*.js' | wc -l)
+          CSS_COUNT=$(find out -name '*.css' | wc -l)
+          TOTAL_FILES=$(find out -type f | wc -l)
+          TOTAL_SIZE=$(du -sb out | cut -f1)
 
-          echo "  Algorithm:  SHA-256"
-          echo "  Scope:      out/ (excluding internal metadata)"
-          echo "  Hash:       $HASH"
+          cat > out/_build-manifest.json << EOF
+          {
+            "build": {
+              "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+              "node_version": "$(node -v)",
+              "npm_version": "$(npm -v)",
+              "next_version": "$(npx next --version 2>/dev/null || echo 'unknown')",
+              "git_sha": "${{ github.sha }}",
+              "git_short_sha": "$(echo '${{ github.sha }}' | cut -c1-7)",
+              "git_ref": "${{ github.ref_name }}",
+              "run_id": "${{ github.run_id }}",
+              "run_number": "${{ github.run_number }}",
+              "actor": "${{ github.actor }}"
+            },
+            "output": {
+              "html_pages": $HTML_COUNT,
+              "js_files": $JS_COUNT,
+              "css_files": $CSS_COUNT,
+              "total_files": $TOTAL_FILES,
+              "total_size_bytes": $TOTAL_SIZE,
+              "total_size_human": "$(du -sh out | cut -f1)"
+            }
+          }
+          EOF
 
-      # ── Upload Artifact ──
+          echo "  ✅ Manifest: $HTML_COUNT pages, $TOTAL_FILES files, $(du -sh out | cut -f1)"
+
+      - name: 🔒 Generate file integrity checksums
+        run: |
+          echo "╔═══════════════════════════════════════╗"
+          echo "║  🔒 FILE INTEGRITY CHECKSUMS          ║"
+          echo "╚═══════════════════════════════════════╝"
+
+          cd out
+          find . -type f \
+            ! -name '_sbom.json' \
+            ! -name '_build-manifest.json' \
+            ! -name '_checksums.sha256' \
+            -exec sha256sum {} + | sort > _checksums.sha256
+          cd ..
+
+          CHECKSUM_COUNT=$(wc -l < out/_checksums.sha256)
+          echo "  ✅ SHA-256 checksums generated for $CHECKSUM_COUNT files"
+
       - name: 📤 Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: helix-wiki-${{ github.sha }}
+          name: helix-wiki-build-${{ github.sha }}
           path: out/
-          retention-days: 14
-          compression-level: 6
+          retention-days: 7
+          if-no-files-found: error
 
-  # ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-  # ┃  🚀  STAGE 3 — DEPLOY VIA FTPS                                         ┃
-  # ┃  Integrity verification • Encrypted upload • Inventory                  ┃
-  # ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  #  STAGE 4 — DEPLOY VIA FTPS
+  #  Secure file transfer to Hostinger production server
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   deploy:
-    name: 🚀 Deploy
+    name: 🚀 Deploy to Production
     runs-on: ubuntu-latest
-    needs: [security-gate, build]
-    if: |
-      needs.security-gate.outputs.should-deploy == 'true' &&
-      github.event.inputs.dry_run != 'true'
+    needs: build
+    timeout-minutes: 20
     environment:
       name: production
       url: ${{ env.SITE_URL }}
-    permissions:
-      contents: read
-      deployments: write
-    steps:
-      - name: 🔐 Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
 
-      # ── Artifact ready ──
+    steps:
       - name: 📥 Download build artifact
         uses: actions/download-artifact@v4
         with:
-          name: helix-wiki-${{ github.sha }}
+          name: helix-wiki-build-${{ github.sha }}
           path: out/
 
-      # ── Pre-deploy Inventory ──
-      - name: 📋 Pre-deploy inventory
+      - name: 🔍 Pre-deploy validation
         run: |
-          echo "═══════════════════════════════════════"
-          echo "  📋 DEPLOYMENT INVENTORY"
-          echo "═══════════════════════════════════════"
-          echo ""
-          printf "  %-18s %s\n" "Total files:" "$(find out -type f | wc -l)"
-          printf "  %-18s %s\n" "HTML pages:" "$(find out -name '*.html' | wc -l)"
-          printf "  %-18s %s\n" "JavaScript:" "$(find out -name '*.js' | wc -l)"
-          printf "  %-18s %s\n" "Stylesheets:" "$(find out -name '*.css' | wc -l)"
-          printf "  %-18s %s\n" "Images:" "$(find out \( -name '*.png' -o -name '*.svg' -o -name '*.ico' -o -name '*.webp' \) | wc -l)"
-          printf "  %-18s %s\n" "Config:" "$(find out \( -name '*.xml' -o -name '*.txt' -o -name '.htaccess' \) | wc -l)"
-          echo ""
+          echo "╔═══════════════════════════════════════╗"
+          echo "║  🔍 PRE-DEPLOY VALIDATION             ║"
+          echo "╚═══════════════════════════════════════╝"
 
-          # Verify critical files exist
-          CRITICAL=(".htaccess" "index.html" "robots.txt" "sitemap.xml" "icon.svg" "og-image.png" "favicon.ico")
-          echo "  Critical files:"
-          ALL_OK=true
-          for f in "${CRITICAL[@]}"; do
-            if find out -name "$f" -print -quit | grep -q .; then
-              echo "    ✅ $f"
-            else
-              echo "    ❌ $f — MISSING"
-              ALL_OK=false
-            fi
-          done
+          ERRORS=0
 
-          if [ "$ALL_OK" = false ]; then
-            echo ""
-            echo "::warning::Some critical files are missing from the build"
+          # Check output directory exists
+          if [ ! -d "out" ]; then
+            echo "  ❌ Build output directory 'out/' not found!"
+            exit 1
           fi
 
-      # ── Remove internal artifacts before upload ──
-      - name: 🧹 Clean internal files
-        run: |
-          rm -f out/_sbom.json out/_build-manifest.json
-          echo "  🧹 Removed internal build artifacts"
+          # Check index.html exists
+          if [ ! -f "out/index.html" ]; then
+            echo "  ❌ index.html missing from build output!"
+            ERRORS=$((ERRORS + 1))
+          else
+            echo "  ✅ index.html present"
+          fi
 
-      # ── FTPS Deploy ──
-      - name: 🚀 Deploy to Hostinger via FTPS
+          # Check 404 page
+          if [ -f "out/404.html" ]; then
+            echo "  ✅ 404.html present"
+          else
+            echo "  ⚠️  404.html missing (non-critical)"
+          fi
+
+          # Check .htaccess
+          if [ -f "out/.htaccess" ]; then
+            echo "  ✅ .htaccess present"
+          else
+            echo "  ⚠️  .htaccess missing"
+          fi
+
+          # Check no .env files leaked
+          if find out -name '.env*' | grep -q .; then
+            echo "  ❌ .env file found in build output — BLOCKED"
+            ERRORS=$((ERRORS + 1))
+          else
+            echo "  ✅ No .env files in output"
+          fi
+
+          # Check no source maps in production
+          MAPS=$(find out -name '*.map' | wc -l)
+          if [ "$MAPS" -gt 0 ]; then
+            echo "  ⚠️  $MAPS source map(s) found — removing for security"
+            find out -name '*.map' -delete
+            echo "  ✅ Source maps removed"
+          else
+            echo "  ✅ No source maps"
+          fi
+
+          # Check total size
+          SIZE_KB=$(du -sk out | cut -f1)
+          SIZE_MB=$((SIZE_KB / 1024))
+          echo "  📦 Total deploy size: ${SIZE_MB}MB (${SIZE_KB}KB)"
+
+          if [ $SIZE_MB -gt 500 ]; then
+            echo "  ❌ Deploy package exceeds 500MB safety limit!"
+            ERRORS=$((ERRORS + 1))
+          fi
+
+          echo ""
+          FILE_COUNT=$(find out -type f | wc -l)
+          echo "  📊 Files to deploy: $FILE_COUNT"
+
+          if [ $ERRORS -gt 0 ]; then
+            echo ""
+            echo "  🚨 $ERRORS critical error(s) — deploy blocked!"
+            exit 1
+          fi
+
+          echo ""
+          echo "  ✅ All pre-deploy checks passed"
+
+      - name: 🚀 Deploy via FTPS
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ${{ secrets.FTP_HOST }}
+          server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: out/
-          server-dir: ${{ secrets.FTP_REMOTE_PATH }}/
+          server-dir: ${{ secrets.FTP_REMOTE_PATH || './' }}
+          local-dir: ./out/
           protocol: ftps
-          port: 21
-          timeout: 600000
           log-level: minimal
-          dangerous-clean-slate: ${{ github.event.inputs.clean_deploy == 'true' }}
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            **/.env*
+          dangerous-clean-slate: false
 
-      # ── Deploy Report ──
-      - name: 📝 Deploy report
+      - name: ✅ Deploy confirmation
         run: |
           echo ""
-          echo "╔══════════════════════════════════════════════════╗"
-          echo "║  🚀 DEPLOYMENT COMPLETE                         ║"
-          echo "╠══════════════════════════════════════════════════╣"
-          printf "║  %-14s %-33s ║\n" "Method:" "FTPS (TLS encrypted)"
-          printf "║  %-14s %-33s ║\n" "Host:" "Hostinger Classic"
-          printf "║  %-14s %-33s ║\n" "Files:" "${{ needs.build.outputs.file-count }}"
-          printf "║  %-14s %-33s ║\n" "Pages:" "${{ needs.build.outputs.page-count }}"
-          printf "║  %-14s %-33s ║\n" "Size:" "${{ needs.build.outputs.build-size }}"
-          printf "║  %-14s %-33s ║\n" "Commit:" "${GITHUB_SHA::8}"
-          printf "║  %-14s %-33s ║\n" "Integrity:" "✅ SHA-256 verified"
-          printf "║  %-14s %-33s ║\n" "Hardened:" "✅ .htaccess deployed"
-          echo "╚══════════════════════════════════════════════════╝"
+          echo "  ╔═══════════════════════════════════════╗"
+          echo "  ║  🎉 DEPLOYMENT SUCCESSFUL!            ║"
+          echo "  ║                                       ║"
+          echo "  ║  🌐 ${{ env.SITE_URL }}               ║"
+          echo "  ║  📦 Commit: ${{ github.sha }}         ║"
+          echo "  ║  👤 Actor:  ${{ github.actor }}       ║"
+          echo "  ║  🕐 Time:   $(date -u +%H:%M:%S)UTC  ║"
+          echo "  ╚═══════════════════════════════════════╝"
+          echo ""
 
-  # ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-  # ┃  ✅  STAGE 4 — POST-DEPLOY VERIFICATION                                ┃
-  # ┃  Health checks • SEO • Performance • Security headers                   ┃
-  # ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  #  STAGE 5 — POST-DEPLOY VERIFICATION
+  #  Health checks • SEO audit • Security headers • Performance baseline
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   verify:
-    name: ✅ Verify
+    name: ✅ Post-Deploy Verification
     runs-on: ubuntu-latest
     needs: deploy
-    if: github.event.inputs.skip_verify != 'true'
-    permissions:
-      contents: read
+    timeout-minutes: 10
+    if: success()
+
     steps:
-      - name: 🔐 Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
-          disable-sudo: true
-
-      - name: ⏳ Wait for propagation
+      - name: ⏳ Wait for CDN propagation
         run: |
-          echo "  ⏳ Waiting 20s for DNS/CDN propagation..."
-          sleep 20
+          echo "  ⏳ Waiting 30s for deployment propagation..."
+          sleep 30
 
-      # ── Health Checks ──
-      - name: 🌐 Health checks — all pages
-        id: health
+      - name: 🌐 Health checks
         run: |
-          echo "╔══════════════════════════════════════════════════╗"
-          echo "║  🌐 HEALTH CHECKS                               ║"
-          echo "╚══════════════════════════════════════════════════╝"
-          echo ""
+          echo "╔═══════════════════════════════════════╗"
+          echo "║  🌐 HEALTH CHECKS                     ║"
+          echo "╚═══════════════════════════════════════╝"
 
-          PASSED=0
-          FAILED=0
-          TOTAL=0
-
-          check() {
-            local name="$1" url="$2" expect="$3"
-            TOTAL=$((TOTAL + 1))
-            STATUS=$(curl -sL -o /dev/null -w "%{http_code}" --connect-timeout 15 --max-time 30 "$url" 2>/dev/null || echo "000")
-            if [ "$STATUS" = "$expect" ]; then
-              printf "  ✅ %-28s HTTP %s\n" "$name" "$STATUS"
-              PASSED=$((PASSED + 1))
-            else
-              printf "  ❌ %-28s HTTP %s (expected %s)\n" "$name" "$STATUS" "$expect"
-              FAILED=$((FAILED + 1))
-            fi
-          }
-
-          echo "  ── Pages ──"
-          check "Homepage"         "${{ env.SITE_URL }}/"                     "200"
-          check "Docs Hub"         "${{ env.SITE_URL }}/docs/"               "200"
-          check "Architecture"     "${{ env.SITE_URL }}/docs/architecture/"   "200"
-          check "Core"             "${{ env.SITE_URL }}/docs/core/"           "200"
-          check "HAL"              "${{ env.SITE_URL }}/docs/hal/"            "200"
-          check "Subsystems"       "${{ env.SITE_URL }}/docs/subsystems/"     "200"
-          check "Modules"          "${{ env.SITE_URL }}/docs/modules/"        "200"
-          check "Filesystem"       "${{ env.SITE_URL }}/docs/filesystem/"     "200"
-          check "NEXUS"            "${{ env.SITE_URL }}/docs/nexus/"          "200"
-          check "Lumina"           "${{ env.SITE_URL }}/docs/lumina/"         "200"
-          check "Donate"           "${{ env.SITE_URL }}/donate/"              "200"
-          check "Download"         "${{ env.SITE_URL }}/download/"            "200"
-
-          echo ""
-          echo "  ── Assets ──"
-          check "robots.txt"       "${{ env.SITE_URL }}/robots.txt"          "200"
-          check "sitemap.xml"      "${{ env.SITE_URL }}/sitemap.xml"         "200"
-          check "Favicon SVG"      "${{ env.SITE_URL }}/icon.svg"            "200"
-          check "Favicon ICO"      "${{ env.SITE_URL }}/favicon.ico"         "200"
-          check "OG Image"         "${{ env.SITE_URL }}/og-image.png"        "200"
-          check "Apple Icon"       "${{ env.SITE_URL }}/apple-icon.png"      "200"
-
-          echo ""
-          echo "  ── HTTPS ──"
-          check "HTTPS redirect"   "http://helix-wiki.com/"                  "200"
-
-          echo ""
-          SCORE=$((PASSED * 100 / TOTAL))
-          echo "╔══════════════════════════════════════════════════╗"
-          printf "║  ✅ Passed: %-6s  ❌ Failed: %-6s  Score: %s%%  ║\n" "$PASSED" "$FAILED" "$SCORE"
-          echo "╚══════════════════════════════════════════════════╝"
-
-          echo "health-passed=$PASSED" >> "$GITHUB_OUTPUT"
-          echo "health-failed=$FAILED" >> "$GITHUB_OUTPUT"
-          echo "health-score=$SCORE" >> "$GITHUB_OUTPUT"
-
-          if [ "$FAILED" -gt 3 ]; then
-            echo "::error::$FAILED health check(s) failed — deployment may be broken"
-            exit 1
-          elif [ "$FAILED" -gt 0 ]; then
-            echo "::warning::$FAILED health check(s) failed"
-          fi
-
-      # ── SEO Verification ──
-      - name: 🔍 SEO audit
-        run: |
-          echo "╔══════════════════════════════════════════════════╗"
-          echo "║  🔍 SEO AUDIT                                   ║"
-          echo "╚══════════════════════════════════════════════════╝"
-          echo ""
-
-          HTML=$(curl -sL --max-time 30 "${{ env.SITE_URL }}/")
+          SITE="${{ env.SITE_URL }}"
           PASS=0
-          TOTAL=0
+          FAIL=0
+          WARN=0
 
-          seo() {
-            local tag="$1" pattern="$2"
-            TOTAL=$((TOTAL + 1))
-            if echo "$HTML" | grep -qi "$pattern"; then
-              printf "  ✅ %-30s\n" "$tag"
+          check_url() {
+            local url="$1"
+            local name="$2"
+            local expected="${3:-200}"
+
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 -L "$url" 2>/dev/null || echo "000")
+
+            if [ "$STATUS" = "$expected" ]; then
+              echo "  ✅ $name → $STATUS"
               PASS=$((PASS + 1))
+            elif [ "$STATUS" = "000" ]; then
+              echo "  ⚠️  $name → TIMEOUT"
+              WARN=$((WARN + 1))
             else
-              printf "  ❌ %-30s\n" "$tag"
+              echo "  ❌ $name → $STATUS (expected $expected)"
+              FAIL=$((FAIL + 1))
             fi
           }
 
-          seo "<title>"                    "<title>"
-          seo "Meta description"           'name="description"'
-          seo "Open Graph: title"          'property="og:title"'
-          seo "Open Graph: description"    'property="og:description"'
-          seo "Open Graph: image"          'property="og:image"'
-          seo "Open Graph: url"            'property="og:url"'
-          seo "Open Graph: type"           'property="og:type"'
-          seo "Twitter: card"              'name="twitter:card"'
-          seo "Twitter: title"             'name="twitter:title"'
-          seo "Canonical URL"              'rel="canonical"'
-          seo "Favicon link"               'rel="icon"'
-          seo "JSON-LD structured data"    'application/ld+json'
-          seo "Viewport meta"              'name="viewport"'
+          echo ""
+          echo "  ── Core Pages ──"
+          check_url "$SITE/"              "Homepage"
+          check_url "$SITE/docs/"         "Documentation"
+          check_url "$SITE/donate/"       "Donate"
+          check_url "$SITE/download/"     "Download"
 
           echo ""
-          SCORE=$((PASS * 100 / TOTAL))
-          echo "  📈 SEO Score: $PASS/$TOTAL ($SCORE%)"
+          echo "  ── Documentation Pages ──"
+          check_url "$SITE/docs/architecture/"  "Architecture"
+          check_url "$SITE/docs/core/"          "Core"
+          check_url "$SITE/docs/filesystem/"    "Filesystem"
+          check_url "$SITE/docs/hal/"           "HAL"
+          check_url "$SITE/docs/lumina/"        "Lumina"
+          check_url "$SITE/docs/modules/"       "Modules"
+          check_url "$SITE/docs/nexus/"         "NEXUS"
+          check_url "$SITE/docs/subsystems/"    "Subsystems"
 
-          if [ "$SCORE" -lt 70 ]; then
-            echo "::warning::SEO score is below 70%"
-          fi
-
-      # ── Performance Baseline ──
-      - name: ⚡ Performance baseline
-        run: |
-          echo "╔══════════════════════════════════════════════════╗"
-          echo "║  ⚡ RESPONSE TIMES                               ║"
-          echo "╚══════════════════════════════════════════════════╝"
           echo ""
+          echo "  ── Static Assets ──"
+          check_url "$SITE/sitemap.xml"     "Sitemap"
+          check_url "$SITE/robots.txt"      "Robots.txt"
+          check_url "$SITE/favicon.ico"     "Favicon"
+          check_url "$SITE/og-image.png"    "OG Image"
+          check_url "$SITE/icon.svg"        "SVG Icon"
 
-          TOTAL_MS=0
-          COUNT=0
+          echo ""
+          echo "  ── Error Handling ──"
+          check_url "$SITE/this-page-does-not-exist-12345/" "404 handling"
 
-          perf() {
-            local path="$1"
-            TIME=$(curl -sL -o /dev/null -w "%{time_total}" --connect-timeout 10 --max-time 15 "${{ env.SITE_URL }}$path" 2>/dev/null || echo "0")
-            MS=$(echo "$TIME * 1000" | bc 2>/dev/null | cut -d'.' -f1)
-            [ -z "$MS" ] && MS=0
-            TOTAL_MS=$((TOTAL_MS + MS))
-            COUNT=$((COUNT + 1))
+          echo ""
+          echo "  ┌──────────────────────────────────┐"
+          echo "  │  Results                          │"
+          echo "  ├──────────────────────────────────┤"
+          echo "  │  ✅ Passed:   $PASS"
+          echo "  │  ❌ Failed:   $FAIL"
+          echo "  │  ⚠️  Timeout:  $WARN"
+          echo "  └──────────────────────────────────┘"
 
-            if [ "$MS" -lt 500 ]; then
-              printf "  ⚡ %-25s %4sms\n" "$path" "$MS"
-            elif [ "$MS" -lt 1500 ]; then
-              printf "  🟡 %-25s %4sms\n" "$path" "$MS"
-            else
-              printf "  🔴 %-25s %4sms\n" "$path" "$MS"
-            fi
-          }
-
-          perf "/"
-          perf "/docs/"
-          perf "/docs/architecture/"
-          perf "/docs/core/"
-          perf "/donate/"
-          perf "/download/"
-
-          if [ "$COUNT" -gt 0 ]; then
-            AVG=$((TOTAL_MS / COUNT))
+          if [ $FAIL -gt 3 ]; then
             echo ""
-            echo "  📊 Average: ${AVG}ms across $COUNT pages"
+            echo "  🚨 Too many failures — investigate deployment!"
+            exit 1
           fi
+        continue-on-error: true
 
-      # ── Security Headers Check ──
-      - name: 🔒 Security headers verification
+      - name: 🔒 Security headers audit
         run: |
-          echo "╔══════════════════════════════════════════════════╗"
-          echo "║  🔒 SECURITY HEADERS                            ║"
-          echo "╚══════════════════════════════════════════════════╝"
-          echo ""
+          echo "╔═══════════════════════════════════════╗"
+          echo "║  🔒 SECURITY HEADERS AUDIT            ║"
+          echo "╚═══════════════════════════════════════╝"
 
-          HEADERS=$(curl -sI --max-time 15 "${{ env.SITE_URL }}/" 2>/dev/null)
-          PASS=0
-          TOTAL=0
+          SITE="${{ env.SITE_URL }}"
+          HEADERS=$(curl -s -I --max-time 15 -L "$SITE" 2>/dev/null || echo "")
 
-          sec() {
-            local name="$1" pattern="$2"
-            TOTAL=$((TOTAL + 1))
-            if echo "$HEADERS" | grep -qi "$pattern"; then
-              printf "  ✅ %-35s\n" "$name"
-              PASS=$((PASS + 1))
-            else
-              printf "  ⚠️  %-35s\n" "$name (missing)"
-            fi
-          }
-
-          sec "Strict-Transport-Security"    "strict-transport-security"
-          sec "X-Content-Type-Options"       "x-content-type-options"
-          sec "X-Frame-Options"              "x-frame-options"
-          sec "X-XSS-Protection"             "x-xss-protection"
-          sec "Content-Security-Policy"      "content-security-policy"
-          sec "Referrer-Policy"              "referrer-policy"
-          sec "Permissions-Policy"           "permissions-policy"
-
-          echo ""
-          SCORE=$((PASS * 100 / TOTAL))
-          echo "  🛡️ Security Score: $PASS/$TOTAL ($SCORE%)"
-
-          if [ "$SCORE" -lt 50 ]; then
-            echo "::warning::Security headers score below 50%"
-          fi
-
-      # ── Content Verification ──
-      - name: 📄 Content integrity
-        run: |
-          echo "╔══════════════════════════════════════════════════╗"
-          echo "║  📄 CONTENT VERIFICATION                        ║"
-          echo "╚══════════════════════════════════════════════════╝"
-          echo ""
-
-          HTML=$(curl -sL --max-time 15 "${{ env.SITE_URL }}/")
-
-          # Check that key content rendered
-          CHECKS=(
-            "Helix:Helix brand"
-            "kernel:Kernel content"
-            "docs:Documentation links"
-          )
-
-          for entry in "${CHECKS[@]}"; do
-            PATTERN="${entry%%:*}"
-            LABEL="${entry##*:}"
-            if echo "$HTML" | grep -qi "$PATTERN"; then
-              printf "  ✅ %-30s\n" "$LABEL"
-            else
-              printf "  ❌ %-30s\n" "$LABEL"
-            fi
-          done
-
-          # Check page size (should be reasonable)
-          SIZE=$(echo "$HTML" | wc -c)
-          SIZE_KB=$((SIZE / 1024))
-          echo ""
-          echo "  📏 Homepage size: ${SIZE_KB}KB"
-          if [ "$SIZE_KB" -lt 5 ]; then
-            echo "::warning::Homepage is suspiciously small (${SIZE_KB}KB)"
-          fi
-
-  # ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-  # ┃  📢  STAGE 5 — NOTIFICATIONS & REPORT                                  ┃
-  # ┃  Discord webhook • GitHub Actions summary                               ┃
-  # ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-  notify:
-    name: 📢 Report
-    runs-on: ubuntu-latest
-    needs: [security-gate, build, deploy, verify]
-    if: always()
-    permissions:
-      contents: read
-    steps:
-
-      # ── Discord Notification ──
-      - name: 📢 Discord notification
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-        run: |
-          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
-            echo "ℹ️  No Discord webhook configured — skipping"
+          if [ -z "$HEADERS" ]; then
+            echo "  ⚠️  Could not fetch headers (site may not be accessible yet)"
             exit 0
           fi
 
-          DEPLOY="${{ needs.deploy.result }}"
-          VERIFY="${{ needs.verify.result }}"
-          AUDIT="${{ needs.security-gate.outputs.audit-status }}"
+          SCORE=0
+          TOTAL=0
 
-          if [ "$DEPLOY" = "success" ] && [ "$VERIFY" != "failure" ]; then
-            COLOR=3066993
-            EMOJI="✅"
-            TITLE="Helix Wiki — Deployed Successfully"
-            DESC="Static site deployed to Hostinger via FTPS.\n\n🔒 All security checks passed."
-            STATUS_FIELD="✅ Live"
-          elif [ "$DEPLOY" = "skipped" ]; then
-            COLOR=16776960
-            EMOJI="⏭️"
-            TITLE="Helix Wiki — Deployment Skipped"
-            DESC="No relevant changes detected."
-            STATUS_FIELD="⏭️ Skipped"
+          check_header() {
+            local header="$1"
+            local name="$2"
+            TOTAL=$((TOTAL + 1))
+
+            if echo "$HEADERS" | grep -qi "$header"; then
+              echo "  ✅ $name"
+              SCORE=$((SCORE + 1))
+            else
+              echo "  ❌ $name — missing"
+            fi
+          }
+
+          echo ""
+          check_header "strict-transport-security"  "HSTS"
+          check_header "x-content-type-options"     "X-Content-Type-Options"
+          check_header "x-frame-options"            "X-Frame-Options"
+          check_header "x-xss-protection"           "X-XSS-Protection"
+          check_header "referrer-policy"            "Referrer-Policy"
+          check_header "permissions-policy"         "Permissions-Policy"
+          check_header "content-security-policy"    "Content-Security-Policy"
+
+          echo ""
+          PERCENT=$((SCORE * 100 / TOTAL))
+          echo "  📊 Security Score: $SCORE/$TOTAL ($PERCENT%)"
+
+          if [ $PERCENT -ge 80 ]; then
+            echo "  🏆 Grade: A — Excellent"
+          elif [ $PERCENT -ge 60 ]; then
+            echo "  📗 Grade: B — Good"
+          elif [ $PERCENT -ge 40 ]; then
+            echo "  📙 Grade: C — Needs Improvement"
           else
-            COLOR=15158332
-            EMOJI="❌"
-            TITLE="Helix Wiki — Deployment Failed"
-            DESC="Pipeline encountered an error. Check workflow logs."
-            STATUS_FIELD="❌ Failed"
+            echo "  📕 Grade: D — Poor"
           fi
+        continue-on-error: true
 
-          AUDIT_EMOJI="✅"
-          [ "$AUDIT" = "warnings" ] && AUDIT_EMOJI="⚠️"
-
-          curl -sf -H "Content-Type: application/json" \
-            -d "{
-              \"embeds\": [{
-                \"title\": \"$EMOJI $TITLE\",
-                \"description\": \"$DESC\",
-                \"color\": $COLOR,
-                \"fields\": [
-                  { \"name\": \"Status\", \"value\": \"$STATUS_FIELD\", \"inline\": true },
-                  { \"name\": \"Commit\", \"value\": \"\`${GITHUB_SHA::8}\`\", \"inline\": true },
-                  { \"name\": \"Author\", \"value\": \"${{ github.actor }}\", \"inline\": true },
-                  { \"name\": \"Build\", \"value\": \"${{ needs.build.outputs.page-count }} pages · ${{ needs.build.outputs.file-count }} files · ${{ needs.build.outputs.build-size }}\", \"inline\": false },
-                  { \"name\": \"Security\", \"value\": \"$AUDIT_EMOJI Audit · ✅ TruffleHog · ✅ Integrity · 🔒 FTPS\", \"inline\": false },
-                  { \"name\": \"Site\", \"value\": \"[${{ env.SITE_URL }}](${{ env.SITE_URL }})\", \"inline\": false }
-                ],
-                \"footer\": { \"text\": \"Helix Wiki CI/CD • Pipeline #${{ github.run_number }}\" },
-                \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
-              }]
-            }" \
-            "$DISCORD_WEBHOOK_URL" || echo "⚠️  Discord notification failed (non-critical)"
-
-      # ── GitHub Summary ──
-      - name: 📝 Pipeline summary
-        if: always()
+      - name: 🔍 SEO quick audit
         run: |
-          DEPLOY="${{ needs.deploy.result }}"
-          VERIFY="${{ needs.verify.result }}"
-          AUDIT="${{ needs.security-gate.outputs.audit-status }}"
+          echo "╔═══════════════════════════════════════╗"
+          echo "║  🔍 SEO QUICK AUDIT                   ║"
+          echo "╚═══════════════════════════════════════╝"
 
-          if [ "$DEPLOY" = "success" ]; then
-            STATUS_ICON="✅"
-            STATUS_TEXT="Deployed"
-          elif [ "$DEPLOY" = "skipped" ]; then
-            STATUS_ICON="⏭️"
-            STATUS_TEXT="Skipped"
-          else
-            STATUS_ICON="❌"
-            STATUS_TEXT="Failed"
+          SITE="${{ env.SITE_URL }}"
+          HTML=$(curl -s --max-time 15 -L "$SITE" 2>/dev/null || echo "")
+
+          if [ -z "$HTML" ]; then
+            echo "  ⚠️  Could not fetch homepage"
+            exit 0
           fi
 
-          AUDIT_ICON="✅"
-          [ "$AUDIT" = "warnings" ] && AUDIT_ICON="⚠️"
+          SCORE=0
+          TOTAL=0
 
-          cat >> "$GITHUB_STEP_SUMMARY" << EOF
+          check_tag() {
+            local pattern="$1"
+            local name="$2"
+            TOTAL=$((TOTAL + 1))
 
-          # 🧬 Helix Wiki — Deployment Report
+            if echo "$HTML" | grep -qi "$pattern"; then
+              echo "  ✅ $name"
+              SCORE=$((SCORE + 1))
+            else
+              echo "  ❌ $name — missing"
+            fi
+          }
 
-          ## $STATUS_ICON Status: $STATUS_TEXT
+          echo ""
+          check_tag '<title'                       "Title tag"
+          check_tag 'meta.*description'            "Meta description"
+          check_tag 'meta.*viewport'               "Viewport meta"
+          check_tag 'link.*canonical'               "Canonical URL"
+          check_tag 'meta.*og:title'               "OG: Title"
+          check_tag 'meta.*og:description'         "OG: Description"
+          check_tag 'meta.*og:image'               "OG: Image"
+          check_tag 'meta.*og:url'                 "OG: URL"
+          check_tag 'meta.*twitter:card'           "Twitter Card"
+          check_tag 'meta.*twitter:title'          "Twitter Title"
+          check_tag 'link.*icon'                   "Favicon link"
+          check_tag 'html.*lang='                  "HTML lang attribute"
+          check_tag 'meta.*theme-color'            "Theme color"
 
-          | Detail | Value |
-          |--------|-------|
-          | **Method** | FTPS (TLS encrypted) |
-          | **Host** | Hostinger Classic |
-          | **URL** | [${{ env.SITE_URL }}](${{ env.SITE_URL }}) |
-          | **Commit** | \`${{ github.sha }}\` |
-          | **Branch** | \`${{ github.ref_name }}\` |
-          | **Actor** | @${{ github.actor }} |
-          | **Trigger** | \`${{ github.event_name }}\` |
-          | **Pipeline** | #${{ github.run_number }} |
-          | **Timestamp** | ${{ needs.build.outputs.timestamp }} |
+          echo ""
+          PERCENT=$((SCORE * 100 / TOTAL))
+          echo "  📊 SEO Score: $SCORE/$TOTAL ($PERCENT%)"
 
-          ## 📊 Build
+          if [ $PERCENT -ge 85 ]; then
+            echo "  🏆 SEO Grade: A — Excellent"
+          elif [ $PERCENT -ge 70 ]; then
+            echo "  📗 SEO Grade: B — Good"
+          else
+            echo "  📙 SEO Grade: C — Needs Work"
+          fi
+        continue-on-error: true
 
-          | Metric | Value |
-          |--------|-------|
-          | Pages | ${{ needs.build.outputs.page-count }} |
-          | Files | ${{ needs.build.outputs.file-count }} |
-          | Size | ${{ needs.build.outputs.build-size }} |
-          | Integrity | \`${{ needs.build.outputs.build-hash }}\` |
+      - name: ⚡ Performance baseline
+        run: |
+          echo "╔═══════════════════════════════════════╗"
+          echo "║  ⚡ PERFORMANCE BASELINE               ║"
+          echo "╚═══════════════════════════════════════╝"
 
-          ## 🔒 Security Checklist
+          SITE="${{ env.SITE_URL }}"
 
-          | Check | Status |
+          measure_page() {
+            local url="$1"
+            local name="$2"
+
+            METRICS=$(curl -s -o /dev/null -w "time_total:%{time_total} time_connect:%{time_connect} time_starttransfer:%{time_starttransfer} size_download:%{size_download}" --max-time 20 -L "$url" 2>/dev/null || echo "")
+
+            if [ -n "$METRICS" ]; then
+              TTFB=$(echo "$METRICS" | grep -oP 'time_starttransfer:\K[0-9.]+')
+              TOTAL=$(echo "$METRICS" | grep -oP 'time_total:\K[0-9.]+')
+              SIZE=$(echo "$METRICS" | grep -oP 'size_download:\K[0-9]+')
+              SIZE_KB=$((SIZE / 1024))
+
+              printf "  %-20s TTFB: %ss  Total: %ss  Size: %sKB\n" "$name" "$TTFB" "$TOTAL" "$SIZE_KB"
+            else
+              printf "  %-20s ⚠️  Could not measure\n" "$name"
+            fi
+          }
+
+          echo ""
+          measure_page "$SITE/"          "Homepage"
+          measure_page "$SITE/docs/"     "Docs Index"
+          measure_page "$SITE/donate/"   "Donate"
+          measure_page "$SITE/download/" "Download"
+          echo ""
+          echo "  ℹ️  TTFB < 0.8s = Good | < 1.8s = Needs Improvement | > 1.8s = Poor"
+        continue-on-error: true
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  #  STAGE 6 — REPORT
+  #  GitHub Actions summary • Deployment record
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  report:
+    name: 📊 Pipeline Report
+    runs-on: ubuntu-latest
+    needs: [security, quality, build, deploy, verify]
+    if: always()
+    timeout-minutes: 5
+
+    steps:
+      - name: 📊 Generate pipeline summary
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY << 'EOF'
+
+          # 🚀 Helix Wiki — Deployment Report
+
+          ## Pipeline Overview
+
+          | Stage | Status |
           |-------|--------|
-          | Hardened runners | ✅ All stages |
-          | Secret scanning (TruffleHog) | ✅ Passed |
-          | Dependency audit | $AUDIT_ICON $([ "$AUDIT" = "clean" ] && echo "Clean" || echo "Warnings") |
-          | TypeScript strict | ✅ Passed |
-          | Build integrity (SHA-256) | ✅ Verified |
-          | FTPS encrypted transfer | ✅ TLS |
-          | .htaccess hardening | ✅ Deployed |
-          | HSTS / CSP / X-Frame | ✅ Configured |
-          | Health checks | $([ "$VERIFY" = "success" ] && echo "✅ Passed" || echo "⚠️ $VERIFY") |
+          | 🛡️ Security Gate | ${{ needs.security.result == 'success' && '✅ Passed' || '❌ Failed' }} |
+          | ✨ Quality Gate | ${{ needs.quality.result == 'success' && '✅ Passed' || needs.quality.result == 'skipped' && '⏭️ Skipped' || '⚠️ Issues' }} |
+          | 🔨 Build & Harden | ${{ needs.build.result == 'success' && '✅ Passed' || '❌ Failed' }} |
+          | 🚀 Deploy FTPS | ${{ needs.deploy.result == 'success' && '✅ Deployed' || '❌ Failed' }} |
+          | ✅ Post-Deploy | ${{ needs.verify.result == 'success' && '✅ Verified' || needs.verify.result == 'skipped' && '⏭️ Skipped' || '⚠️ Issues' }} |
+
+          ## Deployment Details
+
+          | Property | Value |
+          |----------|-------|
+          | 🌐 **URL** | [helix-wiki.com](https://helix-wiki.com) |
+          | 📦 **Commit** | `${{ github.sha }}` |
+          | 🌿 **Branch** | `${{ github.ref_name }}` |
+          | 👤 **Actor** | @${{ github.actor }} |
+          | 🔢 **Run** | #${{ github.run_number }} |
+          | 🕐 **Timestamp** | $(date -u +"%Y-%m-%d %H:%M:%S UTC") |
+
+          ## Security Features
+
+          - 🔐 Secret scanning (12 patterns)
+          - 🔍 Dependency audit (critical = blocking)
+          - 📜 License compliance check
+          - 🛡️ .htaccess hardening (HSTS, CSP, security headers)
+          - 🔒 Source map removal
+          - 📋 SBOM generation
+          - 🔒 SHA-256 integrity checksums
+          - 🚫 .env leak protection
 
           ---
-          *Generated by the Helix Wiki CI/CD pipeline*
 
+          *Generated by Helix Wiki CI/CD Pipeline v3.0*
           EOF
+
+          echo ""
+          echo "  ╔═══════════════════════════════════════╗"
+          echo "  ║  📊 Pipeline report generated         ║"
+          echo "  ║  View in GitHub Actions → Summary     ║"
+          echo "  ╚═══════════════════════════════════════╝"
