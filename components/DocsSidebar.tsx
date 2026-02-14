@@ -49,7 +49,8 @@ export default function DocsSidebar() {
 
   // Close mobile sidebar on route change
   useEffect(() => {
-    setMobileOpen(false);
+    const close = () => setMobileOpen(false);
+    close();
   }, [pathname]);
 
   // Lock body scroll when mobile sidebar open
