@@ -266,7 +266,10 @@ export default function SearchBar() {
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
-      setQuery(""); setSelectedIndex(0);
+      // Reset search state when opening
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setQuery("");
+      setSelectedIndex(0);
       setTimeout(() => inputRef.current?.focus(), 50);
     } else {
       document.body.style.overflow = "";
@@ -303,6 +306,7 @@ export default function SearchBar() {
   }
 
   const [isMac, setIsMac] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setIsMac(navigator.platform?.toLowerCase().includes("mac")); }, []);
 
   return (
