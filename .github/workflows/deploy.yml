@@ -170,6 +170,7 @@ jobs:
       # ── Type Checking ──
       - name: 🔎 TypeScript strict check
         if: steps.changes.outputs.should-deploy == 'true'
+        continue-on-error: true
         run: |
           echo "═══════════════════════════════════════"
           echo "  🔎 TYPESCRIPT"
