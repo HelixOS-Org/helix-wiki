@@ -103,7 +103,7 @@ jobs:
       - name: 📥 Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
           persist-credentials: false
 
       # ── Change Detection ──
@@ -114,30 +114,11 @@ jobs:
           echo "  🔍 CHANGE DETECTION"
           echo "═══════════════════════════════════════"
 
-          CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "FIRST_PUSH")
-
-          # Skip pattern — ONLY these files are truly irrelevant to deployment
-          SKIP_PATTERN='^\.(git|husky)|^\.vscode/|^docker|^Dockerfile|^Makefile$|^justfile$|^\.editorconfig$'
-
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "should-deploy=true" >> "$GITHUB_OUTPUT"
-            echo "  ✅ Manual trigger — deploying"
-          elif [ "$CHANGED" = "FIRST_PUSH" ]; then
-            echo "should-deploy=true" >> "$GITHUB_OUTPUT"
-            echo "  ✅ First push — deploying"
-          else
-            # Deploy unless ALL changed files match the skip pattern
-            RELEVANT=$(echo "$CHANGED" | grep -vE "$SKIP_PATTERN" || true)
-            if [ -n "$RELEVANT" ]; then
-              echo "should-deploy=true" >> "$GITHUB_OUTPUT"
-              echo "  ✅ Deployment-relevant changes detected:"
-              echo "$RELEVANT" | head -20 | sed 's/^/     /'
-            else
-              echo "should-deploy=false" >> "$GITHUB_OUTPUT"
-              echo "  ⏭️  Only irrelevant files changed — skipping"
-              echo "$CHANGED" | head -10 | sed 's/^/     /'
-            fi
-          fi
+          # Always deploy — the change detection was causing false skips.
+          # With static export + FTP diff sync, deploying is cheap and safe.
+          echo "should-deploy=true" >> "$GITHUB_OUTPUT"
+          echo "  ✅ Deploying (branch: ${{ github.ref_name }}, event: ${{ github.event_name }})"
+          echo "  📝 Commit: ${GITHUB_SHA::8} by ${{ github.actor }}"
 
       # ── Secret Scanning ──
       - name: 🔒 TruffleHog — scan for leaked secrets
