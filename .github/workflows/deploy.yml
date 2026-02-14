@@ -414,22 +414,9 @@ jobs:
           echo ""
           echo "  ✅ SBOM saved to _sbom.json"
 
-      # ── Build Integrity Hash ──
-      - name: 🔏 Generate build integrity hash
-        id: integrity
+      # ── Build Manifest (MUST be before integrity hash) ──
+      - name: 📋 Generate build manifest
         run: |
-          echo "═══════════════════════════════════════"
-          echo "  🔏 BUILD INTEGRITY"
-          echo "═══════════════════════════════════════"
-
-          HASH=$(find out -type f -not -name '_sbom.json' -exec sha256sum {} \; | sort | sha256sum | cut -d' ' -f1)
-          echo "sha256=$HASH" >> "$GITHUB_OUTPUT"
-
-          echo "  Algorithm:  SHA-256"
-          echo "  Scope:      out/ (all files)"
-          echo "  Hash:       $HASH"
-
-          # Save build manifest
           cat > out/_build-manifest.json << MANIFEST
           {
             "version": "1.0",
@@ -437,12 +424,27 @@ jobs:
             "ref": "${{ github.ref_name }}",
             "actor": "${{ github.actor }}",
             "timestamp": "${{ steps.meta.outputs.timestamp }}",
-            "integrity": "$HASH",
             "node": "$(node -v)",
             "pipeline": "${{ github.run_id }}"
           }
           MANIFEST
           echo "  ✅ Build manifest saved"
+
+      # ── Build Integrity Hash (AFTER all files are generated) ──
+      - name: 🔏 Generate build integrity hash
+        id: integrity
+        run: |
+          echo "═══════════════════════════════════════"
+          echo "  🔏 BUILD INTEGRITY"
+          echo "═══════════════════════════════════════"
+
+          # Exclude internal metadata files — these are removed before FTP upload
+          HASH=$(find out -type f -not -name '_sbom.json' -not -name '_build-manifest.json' -exec sha256sum {} \; | sort | sha256sum | cut -d' ' -f1)
+          echo "sha256=$HASH" >> "$GITHUB_OUTPUT"
+
+          echo "  Algorithm:  SHA-256"
+          echo "  Scope:      out/ (excluding internal metadata)"
+          echo "  Hash:       $HASH"
 
       # ── Upload Artifact ──
       - name: 📤 Upload build artifact
@@ -490,7 +492,7 @@ jobs:
           echo "  🔏 INTEGRITY VERIFICATION"
           echo "═══════════════════════════════════════"
 
-          HASH=$(find out -type f -not -name '_sbom.json' -exec sha256sum {} \; | sort | sha256sum | cut -d' ' -f1)
+          HASH=$(find out -type f -not -name '_sbom.json' -not -name '_build-manifest.json' -exec sha256sum {} \; | sort | sha256sum | cut -d' ' -f1)
           EXPECTED="${{ needs.build.outputs.build-hash }}"
 
           echo "  Expected: $EXPECTED"
