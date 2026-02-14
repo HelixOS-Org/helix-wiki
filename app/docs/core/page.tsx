@@ -2,9 +2,7 @@ import type { Metadata } from "next";
 import PageHeader from "@/helix-wiki/components/PageHeader";
 import Section from "@/helix-wiki/components/Section";
 import RustCode from "@/helix-wiki/components/RustCode";
-import InfoTable from "@/helix-wiki/components/InfoTable";
 import Footer from "@/helix-wiki/components/Footer";
-import FileTree from "@/helix-wiki/components/diagrams/FileTree";
 
 export const metadata: Metadata = {
   title: "Core Kernel — TCB, Syscalls, IPC, Self-Heal & Hot-Reload",
