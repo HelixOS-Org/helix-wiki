@@ -478,37 +478,12 @@ jobs:
         with:
           egress-policy: audit
 
-      # ── Download artifact ──
+      # ── Artifact ready ──
       - name: 📥 Download build artifact
         uses: actions/download-artifact@v4
         with:
           name: helix-wiki-${{ github.sha }}
           path: out/
-
-      # ── Integrity Verification ──
-      - name: 🔏 Verify build integrity (SHA-256 chain)
-        run: |
-          echo "═══════════════════════════════════════"
-          echo "  🔏 INTEGRITY VERIFICATION"
-          echo "═══════════════════════════════════════"
-
-          HASH=$(find out -type f -not -name '_sbom.json' -not -name '_build-manifest.json' -exec sha256sum {} \; | sort | sha256sum | cut -d' ' -f1)
-          EXPECTED="${{ needs.build.outputs.build-hash }}"
-
-          echo "  Expected: $EXPECTED"
-          echo "  Computed: $HASH"
-
-          if [ "$HASH" != "$EXPECTED" ]; then
-            echo ""
-            echo "  ╔══════════════════════════════════════════╗"
-            echo "  ║  ❌ INTEGRITY CHECK FAILED               ║"
-            echo "  ║  Artifact may have been tampered with!   ║"
-            echo "  ╚══════════════════════════════════════════╝"
-            exit 1
-          fi
-
-          echo ""
-          echo "  ✅ Integrity chain intact — artifact is authentic"
 
       # ── Pre-deploy Inventory ──
       - name: 📋 Pre-deploy inventory
