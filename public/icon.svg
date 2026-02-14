@@ -1,0 +1,42 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gL" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4A90E2"/>
+      <stop offset="100%" stop-color="#7B68EE"/>
+    </linearGradient>
+    <linearGradient id="gR" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7B68EE"/>
+      <stop offset="100%" stop-color="#9B59B6"/>
+    </linearGradient>
+    <linearGradient id="gRung" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#4A90E2" stop-opacity="0.5"/>
+      <stop offset="50%" stop-color="#7B68EE" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#9B59B6" stop-opacity="0.5"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(256, 256) scale(0.5)">
+    <!-- Main strands -->
+    <path d="M -192.5,-258.5 Q -247.5,-148.5 -203.5,-5.5 Q -159.5,148.5 -247.5,258.5" stroke="url(#gL)" stroke-width="36" fill="none" stroke-linecap="round"/>
+    <path d="M  192.5,-258.5 Q  247.5,-148.5  203.5,-5.5 Q  159.5,148.5  247.5,258.5" stroke="url(#gR)" stroke-width="36" fill="none" stroke-linecap="round"/>
+    <!-- Bright inner highlight -->
+    <path d="M -192.5,-258.5 Q -247.5,-148.5 -203.5,-5.5 Q -159.5,148.5 -247.5,258.5" stroke="#7EB8FF" stroke-width="10" fill="none" stroke-linecap="round" opacity="0.5"/>
+    <path d="M  192.5,-258.5 Q  247.5,-148.5  203.5,-5.5 Q  159.5,148.5  247.5,258.5" stroke="#C9A0FF" stroke-width="10" fill="none" stroke-linecap="round" opacity="0.5"/>
+    <!-- DNA Rungs -->
+    <line x1="-172" y1="-195" x2="172" y2="-195" stroke="url(#gRung)" stroke-width="10" stroke-linecap="round" opacity="0.7"/>
+    <line x1="-196" y1="-100" x2="196" y2="-100" stroke="url(#gRung)" stroke-width="12" stroke-linecap="round" opacity="0.7"/>
+    <line x1="-200" y1="0"    x2="200" y2="0"    stroke="url(#gRung)" stroke-width="14" stroke-linecap="round" opacity="0.7"/>
+    <line x1="-196" y1="100"  x2="196" y2="100"  stroke="url(#gRung)" stroke-width="12" stroke-linecap="round" opacity="0.7"/>
+    <line x1="-220" y1="195"  x2="220" y2="195"  stroke="url(#gRung)" stroke-width="10" stroke-linecap="round" opacity="0.7"/>
+    <!-- Node dots -->
+    <circle cx="-172" cy="-195" r="8" fill="#4A90E2"/>
+    <circle cx="172"  cy="-195" r="8" fill="#9B59B6"/>
+    <circle cx="-196" cy="-100" r="8" fill="#4A90E2"/>
+    <circle cx="196"  cy="-100" r="8" fill="#9B59B6"/>
+    <circle cx="-200" cy="0"    r="8" fill="#7B68EE"/>
+    <circle cx="200"  cy="0"    r="8" fill="#7B68EE"/>
+    <circle cx="-196" cy="100"  r="8" fill="#4A90E2"/>
+    <circle cx="196"  cy="100"  r="8" fill="#9B59B6"/>
+    <circle cx="-220" cy="195"  r="8" fill="#4A90E2"/>
+    <circle cx="220"  cy="195"  r="8" fill="#9B59B6"/>
+  </g>
+</svg>
