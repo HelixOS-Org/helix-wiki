@@ -70,9 +70,19 @@ ehthumbs.db
 # ─── FTP Deployment ─────────────────────────────────────────────────────────
 .ftp-deploy-sync-state.json
 
+# ─── Git ──────────────────────────────────────────────────────────────────────
+*.orig
+*.BACKUP.*
+*.BASE.*
+*.LOCAL.*
+*.REMOTE.*
+*_BACKUP_*.txt
+*_BASE_*.txt
+*_LOCAL_*.txt
+*_REMOTE_*.txt
+
 # ─── Misc ────────────────────────────────────────────────────────────────────
 *.bak
 *.tmp
 *.temp
-*.orig
 .cache/
