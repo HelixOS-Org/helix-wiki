@@ -116,21 +116,27 @@ jobs:
 
           CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "FIRST_PUSH")
 
+          # Skip pattern — ONLY these files are truly irrelevant to deployment
+          SKIP_PATTERN='^\.(git|husky)|^\.vscode/|^docker|^Dockerfile|^Makefile$|^justfile$|^\.editorconfig$'
+
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "should-deploy=true" >> "$GITHUB_OUTPUT"
             echo "  ✅ Manual trigger — deploying"
           elif [ "$CHANGED" = "FIRST_PUSH" ]; then
             echo "should-deploy=true" >> "$GITHUB_OUTPUT"
             echo "  ✅ First push — deploying"
-          elif echo "$CHANGED" | grep -qE '\.(tsx?|jsx?|css|json|mjs|svg|png|ico|xml|txt)$|next\.config|package|\.htaccess'; then
-            echo "should-deploy=true" >> "$GITHUB_OUTPUT"
-            echo "  ✅ Deployment-relevant changes detected:"
-            echo "$CHANGED" | grep -E '\.(tsx?|jsx?|css|json|mjs|svg|png|ico|xml|txt)$|next\.config|package' | head -20 | sed 's/^/     /'
           else
-            echo "should-deploy=false" >> "$GITHUB_OUTPUT"
-            echo "  ⏭️  No deployment-relevant changes"
-            echo "  Changed files:"
-            echo "$CHANGED" | head -10 | sed 's/^/     /'
+            # Deploy unless ALL changed files match the skip pattern
+            RELEVANT=$(echo "$CHANGED" | grep -vE "$SKIP_PATTERN" || true)
+            if [ -n "$RELEVANT" ]; then
+              echo "should-deploy=true" >> "$GITHUB_OUTPUT"
+              echo "  ✅ Deployment-relevant changes detected:"
+              echo "$RELEVANT" | head -20 | sed 's/^/     /'
+            else
+              echo "should-deploy=false" >> "$GITHUB_OUTPUT"
+              echo "  ⏭️  Only irrelevant files changed — skipping"
+              echo "$CHANGED" | head -10 | sed 's/^/     /'
+            fi
           fi
 
       # ── Secret Scanning ──
