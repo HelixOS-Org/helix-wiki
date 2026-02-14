@@ -1,0 +1,78 @@
+# =============================================================================
+# Helix Wiki — .gitignore
+# =============================================================================
+
+# ─── Dependencies ────────────────────────────────────────────────────────────
+node_modules/
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# ─── Next.js ─────────────────────────────────────────────────────────────────
+.next/
+out/
+next-env.d.ts
+
+# ─── Build & Production ─────────────────────────────────────────────────────
+build/
+dist/
+*.tsbuildinfo
+
+# ─── Environment & Secrets ───────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+
+# ─── Testing & Coverage ─────────────────────────────────────────────────────
+coverage/
+.nyc_output/
+*.lcov
+jest-results.json
+
+# ─── Debug & Logs ────────────────────────────────────────────────────────────
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+*.log
+
+# ─── OS Files ────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+Desktop.ini
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# ─── IDE & Editor ────────────────────────────────────────────────────────────
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# ─── Vercel / Hosting ───────────────────────────────────────────────────────
+.vercel/
+.netlify/
+
+# ─── FTP Deployment ─────────────────────────────────────────────────────────
+.ftp-deploy-sync-state.json
+
+# ─── Misc ────────────────────────────────────────────────────────────────────
+*.bak
+*.tmp
+*.temp
+*.orig
+.cache/
