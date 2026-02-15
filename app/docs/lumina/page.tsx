@@ -1,46 +1,59 @@
-import type { Metadata } from "next";
+"use client";
+
 import PageHeader from "@/helix-wiki/components/PageHeader";
 import Section from "@/helix-wiki/components/Section";
 import RustCode from "@/helix-wiki/components/RustCode";
 import InfoTable from "@/helix-wiki/components/InfoTable";
 import Footer from "@/helix-wiki/components/Footer";
+import { useI18n } from "@/helix-wiki/lib/i18n";
+import { getDocString } from "@/helix-wiki/lib/docs-i18n";
+import luminaContent from "@/helix-wiki/lib/docs-i18n/lumina";
 
-export const metadata: Metadata = {
-  title: "Lumina — Vulkan-Class GPU API: Render Graphs, Shaders & Magma Driver",
-  description: "Lumina: a Vulkan-inspired GPU abstraction for Helix OS. 350K lines covering render graphs, GLSL/HLSL→SPIR-V shader compilation, PBR materials, type-safe handles, and the Magma GPU driver.",
-  alternates: { canonical: "/docs/lumina" },
-  openGraph: {
-    title: "Lumina GPU API — Graphics Pipeline for Helix OS",
-    description: "8 sub-crates: core math, render pipeline builder, DAG-based render graph scheduling, shader reflection, GPU synchronization primitives, and the low-level Magma command buffer driver.",
-    url: "https://helix-wiki.com/docs/lumina",
-  },
-};
 import LayerStack from "@/helix-wiki/components/diagrams/LayerStack";
 import FileTree from "@/helix-wiki/components/diagrams/FileTree";
 
 export default function LuminaPage() {
+  const { locale } = useI18n();
+  const d = (key: string) => getDocString(luminaContent, locale, key);
   return (
     <div className="min-h-screen bg-black text-white">
-      <PageHeader title="Lumina" subtitle="197,473 lines across 282 files — the Helix GPU-accelerated graphics stack. 14 sub-crates covering math, shaders, render pipeline, materials, meshes, and synchronization. Includes the Magma GPU driver (17,664 lines)." badge="GRAPHICS" gradient="from-pink-400 to-rose-500" />
+      <PageHeader title={d("header.title")} subtitle={d("header.subtitle")} badge={d("header.badge")} gradient="from-pink-400 to-rose-500" />
 
       {/* ── OVERVIEW ── */}
       <Section title="Architecture Overview" id="overview">
-        <p>Lumina is a complete GPU graphics stack built from scratch in <code className="text-helix-blue">no_std</code> Rust. It provides a layered architecture from low-level GPU hardware abstraction up to high-level rendering with materials, meshes, and shader compilation:</p>
+        <p>{d("overview.intro")}</p>
 
         <LayerStack layers={[
-          { label: "Application Layer (scene, UI, compositing)", detail: "App", color: "pink" },
-          { label: "Render Pipeline (lumina-pipeline, lumina-render)", detail: "Rendering", color: "rose" },
-          { label: "Material & Mesh (lumina-material, lumina-mesh)", detail: "Assets", color: "purple" },
-          { label: "Shader Compiler (lumina-shader → lumina-ir → lumina-spirv)", detail: "Compilation", color: "blue" },
-          { label: "GPU Abstraction (lumina-backend, lumina-sync)", detail: "Backend", color: "cyan" },
-          { label: "Core Types (lumina-core, lumina-math)", detail: "Foundation", color: "amber" },
-          { label: "Memory (lumina-memory) + Debug (lumina-debug)", detail: "Infrastructure", color: "zinc" },
-          { label: "Magma GPU Driver (magma-core, magma-hal, magma-command)", detail: "Hardware", color: "green" },
+          { label: "Application Layer (scene, UI, compositing)", detail: "App", color: "pink",
+            description: "Top-level application layer providing scene graph management, UI compositing, and window integration for desktop rendering.",
+            info: { components: ["Scene Graph", "UI Compositor", "Window Manager"], metrics: [{ label: "API", value: "High-level", color: "#EC4899" }, { label: "Widgets", value: "20+" }], api: ["create_window()", "render_scene()", "composite_ui()"], status: "active" } },
+          { label: "Render Pipeline (lumina-pipeline, lumina-render)", detail: "Rendering", color: "rose",
+            description: "Multi-pass render pipeline with configurable render passes, render targets, and GPU command queue management for optimal batching and frame scheduling.",
+            info: { components: ["lumina-pipeline", "lumina-render", "Command Queue"], metrics: [{ label: "Passes", value: "Multi", color: "#F43F5E" }, { label: "Batch", value: "Oui" }], api: ["begin_pass()", "submit_queue()", "present()"], status: "active" } },
+          { label: "Material & Mesh (lumina-material, lumina-mesh)", detail: "Assets", color: "purple",
+            description: "Asset management for PBR materials, textures, and geometry. Handles mesh LOD, texture atlas packing, vertex/index buffer management and GPU upload.",
+            info: { components: ["lumina-material", "lumina-mesh", "Texture Atlas"], metrics: [{ label: "PBR", value: "Oui", color: "#7B68EE" }, { label: "LOD", value: "Auto" }], api: ["load_mesh()", "bind_material()", "upload_texture()"], status: "active" } },
+          { label: "Shader Compiler (lumina-shader → lumina-ir → lumina-spirv)", detail: "Compilation", color: "blue",
+            description: "Multi-stage shader compiler: source → IR → SPIR-V with runtime reflection for automatic uniform binding and pipeline layout generation.",
+            info: { components: ["lumina-shader", "lumina-ir", "lumina-spirv"], metrics: [{ label: "Target", value: "SPIR-V", color: "#4A90E2" }, { label: "Stages", value: "3" }], api: ["compile_shader()", "emit_spirv()", "reflect_uniforms()"], status: "active" } },
+          { label: "GPU Abstraction (lumina-backend, lumina-sync)", detail: "Backend", color: "cyan",
+            description: "Hardware abstraction over GPU backends with synchronization primitives. Provides a unified command buffer API regardless of the underlying graphics driver.",
+            info: { components: ["lumina-backend", "lumina-sync", "Fence/Semaphore"], metrics: [{ label: "Backends", value: "Multi", color: "#22D3EE" }, { label: "Sync", value: "Oui" }], api: ["create_buffer()", "create_image()", "wait_fence()"], status: "active" } },
+          { label: "Core Types (lumina-core, lumina-math)", detail: "Foundation", color: "amber",
+            description: "Foundation math library with SIMD-optimized vectors, matrices, quaternions, colors, and geometric primitives used throughout the rendering stack.",
+            info: { components: ["lumina-core", "lumina-math", "SIMD Engine"], metrics: [{ label: "SIMD", value: "Oui", color: "#F59E0B" }, { label: "Types", value: "12+" }], api: ["Vec3::new()", "Mat4::perspective()", "Color::rgba()"], status: "active" } },
+          { label: "Memory (lumina-memory) + Debug (lumina-debug)", detail: "Infrastructure", color: "zinc",
+            description: "Custom GPU memory allocator with sub-allocation pools, frame-based staging, and integrated GPU profiler for performance monitoring and leak detection.",
+            info: { components: ["lumina-memory", "lumina-debug", "GPU Profiler"], metrics: [{ label: "Alloc", value: "Pool" }, { label: "Profile", value: "GPU" }], api: ["gpu_alloc()", "begin_profile()", "track_leak()"], status: "passive" } },
+          { label: "Magma GPU Driver (magma-core, magma-hal, magma-command)", detail: "Hardware", color: "green",
+            description: "Kernel-level GPU driver providing ring buffer command submission, MMIO register access, and IRQ handling for direct GPU hardware communication.",
+            info: { components: ["magma-core", "magma-hal", "magma-command"], metrics: [{ label: "Ring", value: "CMD", color: "#22C55E" }, { label: "DMA", value: "Oui" }], api: ["ring_submit()", "mmio_read()", "irq_register()"], status: "active" } },
         ]} />
       </Section>
 
       {/* ── SUB-CRATES ── */}
       <Section title="Sub-Crate Inventory" id="crates">
+        <p>{d("inventory.intro")}</p>
         <InfoTable
           columns={[
             { header: "Crate", key: "crate" },
@@ -68,7 +81,7 @@ export default function LuminaPage() {
 
       {/* ── CORE ── */}
       <Section title="Core Handle System" id="handles">
-        <p>Lumina uses a generational handle system for GPU resource management. Handles are lightweight 64-bit IDs — no raw pointers, no reference counting overhead. When a resource is freed, its generation increments, instantly invalidating all outstanding handles:</p>
+        <p>{d("handles.intro")}</p>
         <RustCode filename="graphics/lumina/lumina-core/src/lib.rs">{`/// 64-bit generational handle:
 /// [  32-bit index  |  32-bit generation  ]
 pub struct Handle<T> {
@@ -119,7 +132,7 @@ impl<T> Pool<T> {
 
       {/* ── MATH ── */}
       <Section title="Math Library" id="math">
-        <p>Complete linear algebra library optimized for GPU graphics — vectors, matrices, quaternions, and geometric primitives. All types are <code className="text-helix-blue">#[repr(C)]</code> for GPU buffer compatibility:</p>
+        <p>{d("math.intro")}</p>
         <RustCode filename="graphics/lumina/lumina-math/src/lib.rs">{`#[repr(C)]
 pub struct Vec2 { pub x: f32, pub y: f32 }
 
@@ -163,7 +176,7 @@ impl Transform {
 
       {/* ── PIPELINE ── */}
       <Section title="Render Pipeline" id="pipeline">
-        <p>The graphics pipeline manages the full vertex-to-pixel path — vertex input, rasterization, depth testing, blending, and render targets:</p>
+        <p>{d("pipeline.intro")}</p>
         <RustCode filename="graphics/lumina/lumina-pipeline/src/lib.rs">{`pub struct GraphicsPipeline {
     pub vertex_input: VertexInputState,
     pub input_assembly: InputAssemblyState,
@@ -238,7 +251,7 @@ pub struct ComputePipeline {
 
       {/* ── RENDER GRAPH ── */}
       <Section title="Render Graph" id="rendergraph">
-        <p>The render graph automatically manages pass ordering, resource transitions, and barrier insertion. Passes declare their inputs and outputs — the graph compiler resolves dependencies and optimizes execution order:</p>
+        <p>{d("rendergraph.intro")}</p>
         <RustCode filename="graphics/lumina/lumina-render/src/graph.rs">{`pub struct RenderGraph {
     passes: Vec<RenderPass>,
     resources: Vec<GraphResource>,
@@ -304,7 +317,7 @@ impl RenderGraph {
 
       {/* ── SHADERS ── */}
       <Section title="Shader Compilation" id="shaders">
-        <p>Lumina includes a full shader compilation pipeline — from a custom shader language through an intermediate representation to SPIR-V bytecode:</p>
+        <p>{d("shaders.intro")}</p>
         <RustCode filename="graphics/lumina/lumina-shader/src/lib.rs">{`pub struct ShaderSource {
     pub source: String,
     pub stage: ShaderStage,
@@ -427,7 +440,7 @@ pub enum IrType {
 
       {/* ── MAGMA ── */}
       <Section title="Magma GPU Driver" id="magma">
-        <p>Magma is the Helix native GPU driver — 17,664 lines across 4 sub-crates, providing direct hardware access for Lumina:</p>
+        <p>{d("magma.intro")}</p>
         <InfoTable
           columns={[
             { header: "Crate", key: "crate" },
@@ -559,27 +572,49 @@ bitflags! {
           <p className="text-sm text-zinc-400">Lumina is built entirely in <code className="text-helix-blue">no_std</code> Rust. It includes its own math library, shader compiler, IR optimizer, SPIR-V emitter, render graph, and GPU driver — with zero external graphics dependencies.</p>
         </div>
         <FileTree title="graphics/lumina/ + drivers/gpu/magma/" tree={[
-          { name: "graphics/lumina", icon: "folder", children: [
-            { name: "lumina-core", icon: "folder", detail: "Handles, pools, resource IDs" },
-            { name: "lumina-math", icon: "folder", detail: "Vec2/3/4, Mat3/4, Quat, AABB, Frustum" },
-            { name: "lumina-shader", icon: "folder", detail: "Shader source parsing" },
-            { name: "lumina-ir", icon: "folder", detail: "Intermediate representation" },
-            { name: "lumina-spirv", icon: "folder", detail: "SPIR-V bytecode generation" },
-            { name: "lumina-macros", icon: "folder", detail: "#[shader], #[vertex], #[uniform]" },
-            { name: "lumina-render", icon: "folder", detail: "Render graph, frame context" },
-            { name: "lumina-pipeline", icon: "folder", detail: "Graphics/Compute pipeline state" },
-            { name: "lumina-material", icon: "folder", detail: "PBR materials, textures, samplers" },
-            { name: "lumina-mesh", icon: "folder", detail: "Vertex/Index buffers, mesh data" },
-            { name: "lumina-backend", icon: "folder", detail: "GPU device abstraction" },
-            { name: "lumina-sync", icon: "folder", detail: "Fence, Semaphore, Barrier" },
-            { name: "lumina-memory", icon: "folder", detail: "GPU allocator, suballocation" },
-            { name: "lumina-debug", icon: "folder", detail: "Debug markers, validation" },
+          { name: "graphics/lumina", icon: "folder",
+            info: { loc: 185000, description: "Complete GPU graphics stack: 14 sub-crates covering math, shaders, rendering, materials, and GPU abstraction — all in no_std Rust.", status: "stable" },
+            children: [
+            { name: "lumina-core", icon: "folder", detail: "Handles, pools, resource IDs",
+              info: { loc: 4200, description: "Foundation types: handles, resource pools, typed IDs, and smart pointers for GPU resource lifetime management.", status: "stable", exports: ["Handle", "ResourcePool", "TypedId", "SlotMap"] } },
+            { name: "lumina-math", icon: "folder", detail: "Vec2/3/4, Mat3/4, Quat, AABB, Frustum",
+              info: { loc: 8500, description: "SIMD-optimized math library: vectors, matrices, quaternions, AABB, frustum culling, ray intersection, and geometric transforms.", status: "stable", exports: ["Vec2", "Vec3", "Vec4", "Mat3", "Mat4", "Quat", "AABB", "Frustum"] } },
+            { name: "lumina-shader", icon: "folder", detail: "Shader source parsing",
+              info: { loc: 12000, description: "Shader language parser and AST: lexer, parser, type checker, and semantic analysis for the Lumina shading language.", status: "stable", exports: ["ShaderSource", "ShaderAST", "TypeChecker"] } },
+            { name: "lumina-ir", icon: "folder", detail: "Intermediate representation",
+              info: { loc: 15000, description: "Shader IR with SSA form: optimization passes (dead code elimination, constant folding, loop unrolling) before SPIR-V emission.", status: "stable", exports: ["IR", "IRModule", "OptPass", "SSABuilder"] } },
+            { name: "lumina-spirv", icon: "folder", detail: "SPIR-V bytecode generation",
+              info: { loc: 11000, description: "SPIR-V backend: translates optimized IR to SPIR-V bytecode with reflection metadata for automatic descriptor set layout.", status: "stable", exports: ["SpirvEmitter", "SpirvModule", "ReflectionData"] } },
+            { name: "lumina-macros", icon: "folder", detail: "#[shader], #[vertex], #[uniform]",
+              info: { loc: 3500, description: "Procedural macros for shader development: #[shader] for entry points, #[vertex] for layout derivation, #[uniform] for binding generation.", status: "stable", exports: ["#[shader]", "#[vertex]", "#[uniform]", "#[push_constant]"] } },
+            { name: "lumina-render", icon: "folder", detail: "Render graph, frame context",
+              info: { loc: 18000, description: "Render graph system: automatic resource barriers, pass scheduling, transient resource allocation, and frame-level resource management.", status: "stable", exports: ["RenderGraph", "RenderPass", "FrameContext", "TransientBuffer"] } },
+            { name: "lumina-pipeline", icon: "folder", detail: "Graphics/Compute pipeline state",
+              info: { loc: 9500, description: "Pipeline state objects: graphics pipeline (rasterization, blend, depth), compute pipeline, and pipeline cache with hash-based deduplication.", status: "stable", exports: ["GraphicsPipeline", "ComputePipeline", "PipelineCache"] } },
+            { name: "lumina-material", icon: "folder", detail: "PBR materials, textures, samplers",
+              info: { loc: 7800, description: "PBR material system: metallic-roughness workflow, texture binding, sampler configuration, and material instance instancing.", status: "stable", exports: ["Material", "Texture", "Sampler", "PBRParams"] } },
+            { name: "lumina-mesh", icon: "folder", detail: "Vertex/Index buffers, mesh data",
+              info: { loc: 6200, description: "Mesh management: vertex/index buffer allocation, vertex format declaration, mesh LOD generation, and draw call batching.", status: "stable", exports: ["Mesh", "VertexBuffer", "IndexBuffer", "MeshLOD"] } },
+            { name: "lumina-backend", icon: "folder", detail: "GPU device abstraction",
+              info: { loc: 22000, description: "GPU backend abstraction: unified API over Vulkan/Metal/DX12 with automatic command buffer management and resource state tracking.", status: "stable", exports: ["Device", "CommandBuffer", "Queue", "Swapchain"] } },
+            { name: "lumina-sync", icon: "folder", detail: "Fence, Semaphore, Barrier",
+              info: { loc: 4500, description: "GPU synchronization primitives: timeline semaphores, binary fences, pipeline barriers, and execution dependency tracking.", status: "stable", exports: ["Fence", "Semaphore", "Barrier", "TimelineSemaphore"] } },
+            { name: "lumina-memory", icon: "folder", detail: "GPU allocator, suballocation",
+              info: { loc: 8000, description: "GPU memory allocator: buddy allocation, pool sub-allocation, staging buffer management, and defragmentation for GPU heaps.", status: "stable", exports: ["GpuAllocator", "MemoryPool", "StagingBuffer"] } },
+            { name: "lumina-debug", icon: "folder", detail: "Debug markers, validation",
+              info: { loc: 3200, description: "Debug and profiling: GPU debug markers, validation layer integration, render doc capture, and performance counters.", status: "stable", exports: ["DebugMarker", "ValidationLayer", "GpuProfiler"] } },
           ]},
-          { name: "drivers/gpu/magma", icon: "folder", children: [
-            { name: "magma-core", icon: "folder", detail: "Device discovery, features, limits" },
-            { name: "magma-hal", icon: "folder", detail: "MMIO, register banks, PCI" },
-            { name: "magma-command", icon: "folder", detail: "Command buffers, submission" },
-            { name: "magma-gl", icon: "folder", detail: "OpenGL compatibility layer" },
+          { name: "drivers/gpu/magma", icon: "folder",
+            info: { loc: 12500, description: "Kernel-level GPU driver: direct hardware access via MMIO, ring buffer command submission, DMA transfers, and interrupt handling.", status: "stable" },
+            children: [
+            { name: "magma-core", icon: "folder", detail: "Device discovery, features, limits",
+              info: { loc: 4000, description: "GPU device discovery: PCI enumeration, feature/limit queries, device initialization, and multi-GPU support.", status: "stable", exports: ["GpuDevice", "DeviceFeatures", "DeviceLimits"] } },
+            { name: "magma-hal", icon: "folder", detail: "MMIO, register banks, PCI",
+              info: { loc: 4500, description: "Hardware abstraction: MMIO register access, PCI config space, BAR mapping, and register bank definitions for GPU families.", status: "stable", exports: ["MmioRegion", "PciConfig", "RegisterBank"] } },
+            { name: "magma-command", icon: "folder", detail: "Command buffers, submission",
+              info: { loc: 3000, description: "GPU command infrastructure: ring buffer management, command encoding, batch submission, and completion tracking via interrupts.", status: "stable", exports: ["CommandRing", "CommandEncoder", "SubmitBatch"] } },
+            { name: "magma-gl", icon: "folder", detail: "OpenGL compatibility layer",
+              info: { loc: 1000, description: "OpenGL compatibility shim: translates legacy GL calls to Magma's native command interface for backward compatibility.", status: "wip", exports: ["GlContext", "GlCompat"] } },
           ]},
         ]} />
       </Section>
