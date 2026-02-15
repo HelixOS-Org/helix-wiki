@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { useI18n } from "@/helix-wiki/lib/i18n";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
    DEEP SEARCH INDEX
@@ -237,6 +238,7 @@ export default function SearchBar() {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const { t } = useI18n();
 
   // Pages only (shown when no query)
   const pages = useMemo(() => index.filter(e => e.category === "page"), []);
@@ -327,8 +329,8 @@ export default function SearchBar() {
           fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
         </svg>
-        <span className="hidden sm:inline truncate">Search docs…</span>
-        <span className="sm:hidden">Search…</span>
+        <span className="hidden sm:inline truncate">{t("search.placeholder")}</span>
+        <span className="sm:hidden">{t("search.placeholder")}</span>
         <kbd className="ml-auto hidden sm:inline-flex items-center gap-0.5
                         rounded-md border border-zinc-600/80 bg-zinc-800/90
                         px-1.5 py-0.5 font-mono text-[10px] text-zinc-400
@@ -381,7 +383,7 @@ export default function SearchBar() {
                 value={query}
                 onChange={e => { setQuery(e.target.value); setSelectedIndex(0); }}
                 onKeyDown={handleKeyDown}
-                placeholder="Search pages, sections, APIs, concepts…"
+                placeholder={t("search.placeholder")}
                 className="flex-1 bg-transparent text-[15px] text-white placeholder:text-zinc-500
                            outline-none caret-helix-blue"
                 spellCheck={false}
