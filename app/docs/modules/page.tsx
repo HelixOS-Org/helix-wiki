@@ -1,33 +1,28 @@
-import type { Metadata } from "next";
+"use client";
+
 import PageHeader from "@/helix-wiki/components/PageHeader";
 import Section from "@/helix-wiki/components/Section";
 import RustCode from "@/helix-wiki/components/RustCode";
 import InfoTable from "@/helix-wiki/components/InfoTable";
 import Footer from "@/helix-wiki/components/Footer";
-
-export const metadata: Metadata = {
-  title: "Module System — Hot-Swappable Plugins, ABI Versioning & KernelModule Trait",
-  description: "Build hot-swappable kernel modules for Helix OS. Learn the KernelModule trait, define_module! macro, lifecycle states, ABI versioning, capability requirements, and the module registry API.",
-  alternates: { canonical: "/docs/modules" },
-  openGraph: {
-    title: "Helix Module System — Hot-Reload Kernel Plugins in Rust",
-    description: "Complete guide to extending the Helix kernel: module metadata, lifecycle management, state export/import for live replacement, dependency resolution, and the declarative define_module! macro.",
-    url: "https://helix-wiki.com/docs/modules",
-  },
-};
+import { useI18n } from "@/helix-wiki/lib/i18n";
+import { getDocString } from "@/helix-wiki/lib/docs-i18n";
+import modulesContent from "@/helix-wiki/lib/docs-i18n/modules";
 import StateMachine from "@/helix-wiki/components/diagrams/StateMachine";
 
 export default function ModulesPage() {
+  const { locale } = useI18n();
+  const d = (key: string) => getDocString(modulesContent, locale, key);
   return (
     <div className="min-h-screen bg-black text-white">
-      <PageHeader title="Module System" subtitle="2,559 lines across 9 files — a hot-swappable, capability-gated module framework with ABI versioning, dependency resolution, and a full lifecycle state machine." badge="MODULE FRAMEWORK" gradient="from-violet-400 to-purple-500" />
+      <PageHeader title={d("header.title")} subtitle={d("header.subtitle")} badge={d("header.badge")} gradient="from-violet-400 to-purple-500" />
 
       {/* ── PHILOSOPHY ── */}
       <Section title="Philosophy" id="philosophy">
-        <p>In Helix, the core kernel provides <em>mechanisms</em> — the module system provides <em>policy</em>. Schedulers, filesystems, drivers, and security modules are all loadable/unloadable at runtime:</p>
+        <p>{d("philosophy.intro")}</p>
         <div className="grid md:grid-cols-2 gap-4 mt-6">
           <div className="bg-zinc-900/40 border border-zinc-800/40 rounded-xl p-5">
-            <h4 className="text-white font-semibold mb-2">🔧 Mechanism (Core)</h4>
+            <h4 className="text-white font-semibold mb-2">{d("philosophy.mechanism.title")}</h4>
             <ul className="text-sm text-zinc-400 space-y-1 list-disc list-inside">
               <li>IPC channels, event bus, message router</li>
               <li>Syscall dispatch table (512 entries)</li>
@@ -37,7 +32,7 @@ export default function ModulesPage() {
             </ul>
           </div>
           <div className="bg-zinc-900/40 border border-zinc-800/40 rounded-xl p-5">
-            <h4 className="text-white font-semibold mb-2">📋 Policy (Modules)</h4>
+            <h4 className="text-white font-semibold mb-2">{d("philosophy.policy.title")}</h4>
             <ul className="text-sm text-zinc-400 space-y-1 list-disc list-inside">
               <li>Which scheduling algorithm to use</li>
               <li>How to allocate memory</li>
@@ -51,7 +46,7 @@ export default function ModulesPage() {
 
       {/* ── CORE TYPES ── */}
       <Section title="Core Types" id="types">
-        <p>Every module has an identity, version, state, and a set of capability flags:</p>
+        <p>{d("types.intro")}</p>
         <RustCode filename="modules/src/lib.rs">{`pub struct ModuleId(u64);  // Auto-incrementing atomic counter
 
 pub struct ModuleVersion {
@@ -107,7 +102,7 @@ pub enum ModuleError {
 
       {/* ── METADATA ── */}
       <Section title="Module Metadata" id="metadata">
-        <p>Rich metadata describes each module — used by the registry for dependency resolution, version checking, and capability negotiation:</p>
+        <p>{d("metadata.intro")}</p>
         <RustCode filename="modules/src/metadata.rs">{`pub struct ModuleMetadata {
     pub name: String,
     pub version: ModuleVersion,
@@ -142,7 +137,7 @@ impl AbiVersion {
 
       {/* ── MODULE TRAIT ── */}
       <Section title="Module Trait" id="trait">
-        <p>The core module trait — every module must implement this. It covers the full lifecycle from init to cleanup, plus health monitoring and state serialization for hot-reload:</p>
+        <p>{d("trait.intro")}</p>
         <RustCode filename="modules/src/lib.rs">{`pub trait Module: Send + Sync {
     /// Return this module's metadata.
     fn metadata(&self) -> &ModuleMetadata;
@@ -191,7 +186,7 @@ pub struct ModuleMessage {
 
       {/* ── REGISTRY ── */}
       <Section title="Module Registry" id="registry">
-        <p>The registry manages module loading, dependency resolution, and state tracking:</p>
+        <p>{d("registry.intro")}</p>
         <RustCode filename="modules/src/registry.rs">{`pub struct ModuleRegistry {
     modules: BTreeMap<ModuleId, ModuleEntry>,
     name_index: BTreeMap<String, ModuleId>,
@@ -238,7 +233,7 @@ impl ModuleRegistry {
 
       {/* ── DEFINE MACRO ── */}
       <Section title="define_module! Macro" id="macro">
-        <p>Declarative module definition — generates metadata and boilerplate:</p>
+        <p>{d("macro.intro")}</p>
         <RustCode filename="modules/src/lib.rs">{`/// Declare a module with all its metadata in one block.
 define_module! {
     name: "round_robin_scheduler",
@@ -259,33 +254,54 @@ define_module! {
 
       {/* ── LIFECYCLE ── */}
       <Section title="Module Lifecycle" id="lifecycle">
-        <p>The complete 9-phase state machine with valid transitions:</p>
+        <p>{d("lifecycle.intro")}</p>
         <StateMachine
+          title="Module Lifecycle State Machine"
           width={700}
           height={420}
           nodes={[
-            { id: "unloaded",     label: "Unloaded",      x: 80,  y: 60,  color: "zinc",   type: "start" },
-            { id: "loading",      label: "Loading",       x: 240, y: 60,  color: "blue" },
-            { id: "loaded",       label: "Loaded",        x: 400, y: 60,  color: "blue" },
-            { id: "initializing", label: "Initializing",  x: 400, y: 160, color: "purple" },
-            { id: "active",       label: "Active",        x: 400, y: 260, color: "green" },
-            { id: "paused",       label: "Paused",        x: 580, y: 260, color: "amber" },
-            { id: "stopping",     label: "Stopping",      x: 400, y: 360, color: "amber" },
-            { id: "error",        label: "Error",         x: 200, y: 260, color: "red",    type: "error" },
-            { id: "zombie",       label: "Zombie",        x: 200, y: 360, color: "pink",   type: "error" },
+            { id: "unloaded",     label: "Unloaded",      x: 80,  y: 60,  color: "zinc",   type: "start",
+              info: { description: "Module binary exists on disk but is not loaded into kernel memory. No resources allocated.", entryActions: ["Release all handles", "Free memory pages"], exitActions: ["Parse ELF header", "Validate ABI magic"], invariants: ["No kernel memory used", "No registry entry"], duration: "N/A" } },
+            { id: "loading",      label: "Loading",       x: 240, y: 60,  color: "blue",
+              info: { description: "ELF binary is being parsed, relocated, and prepared for execution. Dependencies are resolved from the module registry.", entryActions: ["Allocate memory pages", "Parse ELF sections", "Apply relocations"], exitActions: ["Verify symbol table", "Lock dependency graph"], invariants: ["Valid ELF in memory", "All relocations applied"], duration: "~10-50 ms" } },
+            { id: "loaded",       label: "Loaded",        x: 400, y: 60,  color: "blue",
+              info: { description: "Module is in kernel memory with all relocations resolved. Dependencies are verified but init() has not been called yet.", entryActions: ["Register in ModuleRegistry", "Freeze relocations"], exitActions: ["Prepare ModuleContext"], invariants: ["All deps satisfied", "ABI compatible"], duration: "Stable" } },
+            { id: "initializing", label: "Initializing",  x: 400, y: 160, color: "purple",
+              info: { description: "Module's init() function is executing. The module registers its services, allocates runtime resources, and subscribes to events.", entryActions: ["Call Module::init(ctx)", "Start init timeout (5s)"], exitActions: ["Verify required services registered"], invariants: ["ModuleContext valid", "Timeout not exceeded"], duration: "~50-500 ms" } },
+            { id: "active",       label: "Active",        x: 400, y: 260, color: "green",
+              info: { description: "Module is fully operational and serving requests. It responds to IPC messages, handles syscalls, and participates in the event bus.", entryActions: ["Mark services as available", "Start health monitoring"], exitActions: ["Drain pending requests"], invariants: ["Health check passing", "Memory within budget"], duration: "Indefinite", canSelfHeal: true } },
+            { id: "paused",       label: "Paused",        x: 580, y: 260, color: "amber",
+              info: { description: "Module is temporarily suspended. State is preserved in memory but no new requests are processed. Used for hot-upgrade preparation.", entryActions: ["Checkpoint state", "Queue incoming requests"], exitActions: ["Replay queued requests"], invariants: ["State checkpointed", "No active handlers"], duration: "Temporary" } },
+            { id: "stopping",     label: "Stopping",      x: 400, y: 360, color: "amber",
+              info: { description: "Graceful shutdown in progress. Module drains remaining work, unsubscribes from events, and releases resources in reverse init order.", entryActions: ["Call Module::stop()", "Start shutdown timeout (10s)"], exitActions: ["Unregister from ModuleRegistry"], invariants: ["No new requests accepted", "Shutdown timer active"], duration: "~100-2000 ms" } },
+            { id: "error",        label: "Error",         x: 200, y: 260, color: "red",    type: "error",
+              info: { description: "Module has crashed or failed a health check. NEXUS quarantines it and attempts automated recovery (restart, rollback, or hot-swap).", entryActions: ["Quarantine module", "Notify NEXUS", "Capture crash dump"], exitActions: ["Attempt recovery strategy"], invariants: ["Module isolated", "Crash dump saved"], duration: "Recovery: ~1-5s", canSelfHeal: true } },
+            { id: "zombie",       label: "Zombie",        x: 200, y: 360, color: "pink",   type: "error",
+              info: { description: "Recovery failed after maximum retry attempts. Module state is preserved for post-mortem debugging but it cannot be restarted automatically.", entryActions: ["Log final failure", "Preserve state for debug"], exitActions: ["Manual intervention required"], invariants: ["State frozen", "No auto-recovery"], duration: "Until manual action" } },
           ]}
           transitions={[
-            { from: "unloaded",     to: "loading",      label: "load()" },
-            { from: "loading",      to: "loaded",       label: "" },
-            { from: "loaded",       to: "initializing", label: "init()" },
-            { from: "initializing", to: "active",       label: "start()" },
-            { from: "initializing", to: "error",        label: "fail", curved: -30 },
-            { from: "active",       to: "paused",       label: "pause()" },
-            { from: "paused",       to: "active",       label: "resume()", curved: -20 },
-            { from: "active",       to: "stopping",     label: "stop()" },
-            { from: "active",       to: "error",        label: "", curved: 30 },
-            { from: "stopping",     to: "unloaded",     label: "cleanup()", curved: 40 },
-            { from: "error",        to: "zombie",       label: "timeout" },
+            { from: "unloaded",     to: "loading",      label: "load()",
+              info: { description: "Load module binary from disk into kernel memory", guard: "File exists && ABI version matches", action: "parse_elf() → relocate() → verify()", probability: "Always" } },
+            { from: "loading",      to: "loaded",       label: "",
+              info: { description: "Automatic transition when loading completes successfully", action: "register_in_registry()", probability: "~95%" } },
+            { from: "loaded",       to: "initializing", label: "init()",
+              info: { description: "Call module's initialization function with kernel context", guard: "All dependencies active", action: "Module::init(ModuleContext)", probability: "Always" } },
+            { from: "initializing", to: "active",       label: "start()",
+              info: { description: "Module init completed successfully, now serving requests", guard: "Required services registered", action: "enable_health_monitor()", probability: "~90%" } },
+            { from: "initializing", to: "error",        label: "fail", curved: -30,
+              info: { description: "Module init() returned an error or timed out (>5s)", guard: "init() error || timeout", action: "quarantine() → notify_nexus()", probability: "~10%" } },
+            { from: "active",       to: "paused",       label: "pause()",
+              info: { description: "Temporarily suspend module for hot-upgrade or maintenance", guard: "No critical in-flight ops", action: "checkpoint_state() → queue_requests()", probability: "Rare" } },
+            { from: "paused",       to: "active",       label: "resume()", curved: -20,
+              info: { description: "Resume paused module and replay queued requests", guard: "Checkpoint valid", action: "restore_state() → replay_queue()", probability: "Always" } },
+            { from: "active",       to: "stopping",     label: "stop()",
+              info: { description: "Begin graceful shutdown sequence", action: "drain_requests() → unsubscribe_events()", probability: "On demand" } },
+            { from: "active",       to: "error",        label: "", curved: 30,
+              info: { description: "Module crashed or failed health check while active", guard: "Panic || health_check_fail", action: "capture_dump() → quarantine()", probability: "~2%" } },
+            { from: "stopping",     to: "unloaded",     label: "cleanup()", curved: 40,
+              info: { description: "Final cleanup: release memory, close handles, remove from registry", action: "Module::cleanup() → free_pages()", probability: "~98%" } },
+            { from: "error",        to: "zombie",       label: "timeout",
+              info: { description: "All recovery strategies exhausted after 3 attempts", guard: "retry_count >= 3", action: "freeze_state() → log_postmortem()", probability: "~5%" } },
           ]}
         />
         <InfoTable
@@ -311,7 +327,7 @@ define_module! {
 
       {/* ── EXAMPLE ── */}
       <Section title="Example: Round-Robin Scheduler" id="example">
-        <p>The <code className="text-helix-blue">modules_impl/schedulers/round_robin</code> crate demonstrates a complete module implementation with hot-reload support:</p>
+        <p>{d("example.intro")}</p>
         <RustCode filename="modules_impl/schedulers/round_robin/src/lib.rs">{`pub struct RoundRobinScheduler {
     ready_queue: VecDeque<ThreadId>,
     current: Option<ThreadId>,
