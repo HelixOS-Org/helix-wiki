@@ -1,29 +1,24 @@
-import type { Metadata } from "next";
+"use client";
+
 import PageHeader from "@/helix-wiki/components/PageHeader";
 import Section from "@/helix-wiki/components/Section";
 import RustCode from "@/helix-wiki/components/RustCode";
 import InfoTable from "@/helix-wiki/components/InfoTable";
 import Footer from "@/helix-wiki/components/Footer";
-
-export const metadata: Metadata = {
-  title: "HAL — Hardware Abstraction Layer for x86_64, AArch64 & RISC-V",
-  description: "The Helix HAL abstracts CPU, MMU, interrupts, and firmware across x86_64, AArch64, and RISC-V 64. Features KASLR, ELF relocation, 4-level page tables, and PIC/APIC/GIC abstraction.",
-  alternates: { canonical: "/docs/hal" },
-  openGraph: {
-    title: "Helix HAL — Multi-Architecture Hardware Abstraction",
-    description: "Uniform HardwareAbstraction trait for CPU registers, MMU page tables, interrupt controllers, and firmware interfaces. Supports x86_64, AArch64, and RISC-V 64 backends.",
-    url: "https://helix-wiki.com/docs/hal",
-  },
-};
+import { useI18n } from "@/helix-wiki/lib/i18n";
+import { getDocString } from "@/helix-wiki/lib/docs-i18n";
+import halContent from "@/helix-wiki/lib/docs-i18n/hal";
 
 export default function HalPage() {
+  const { locale } = useI18n();
+  const d = (key: string) => getDocString(halContent, locale, key);
   return (
     <div className="min-h-screen bg-black text-white">
-      <PageHeader title="Hardware Abstraction Layer" subtitle="64,718 lines across 137 files — a unified trait-based abstraction over x86_64, AArch64, and RISC-V 64, covering CPU, MMU, interrupts, firmware, KASLR, and ELF relocation." badge="HAL" gradient="from-emerald-400 to-teal-500" />
+      <PageHeader title={d("header.title")} subtitle={d("header.subtitle")} badge={d("header.badge")} gradient="from-emerald-400 to-teal-500" />
 
       {/* ── CORE TRAIT ── */}
       <Section title="Core HAL Trait" id="hal-trait">
-        <p>The master abstraction. Every architecture backend implements this single trait with its associated types. The kernel never touches hardware directly — it goes through the HAL:</p>
+        <p>{d("hal.intro")}</p>
         <RustCode filename="hal/src/lib.rs">{`pub enum HalError {
     NotInitialized,
     NotSupported,
@@ -68,12 +63,12 @@ pub static GLOBAL_HAL: Once<Mutex<StubHal>> = Once::new();
 pub fn init_hal() -> Result<(), HalError>;
 pub fn hal() -> &'static Mutex<StubHal>;
 pub fn hal_ref() -> &'static StubHal;`}</RustCode>
-        <p className="mt-4"><strong className="text-white">Feature flags:</strong> <code className="text-helix-blue">x86_64</code> (default), <code className="text-helix-blue">aarch64</code>, <code className="text-helix-blue">riscv64</code>, <code className="text-helix-blue">debug_reloc</code>, <code className="text-helix-blue">validation</code>, <code className="text-helix-blue">tlb_stats</code>, <code className="text-helix-blue">percpu</code></p>
+        <p className="mt-4">{d("hal.features")}</p>
       </Section>
 
       {/* ── CPU ── */}
       <Section title="CPU Abstraction" id="cpu">
-        <p>Full CPU lifecycle management — context switching, feature detection, topology discovery, and FPU/SIMD state:</p>
+        <p>{d("cpu.intro")}</p>
         <RustCode filename="hal/src/cpu.rs">{`/// ~20 methods covering the entire CPU surface.
 pub trait CpuAbstraction: Send + Sync {
     // ── Context ──
@@ -143,7 +138,7 @@ pub trait FpuContext: Send + Sync {
 
       {/* ── MMU ── */}
       <Section title="MMU & Page Tables" id="mmu">
-        <p>Full virtual memory management with page flags, multi-level page tables, and TLB control. The <code className="text-helix-blue">PageFlags</code> bitflags cover all common page attributes across architectures:</p>
+        <p>{d("mmu.intro")}</p>
         <RustCode filename="hal/src/mmu.rs">{`bitflags! {
     pub struct PageFlags: u64 {
         const PRESENT        = 1 << 0;   // Page is mapped
@@ -219,7 +214,7 @@ pub trait TlbManager: Send + Sync {
 
       {/* ── INTERRUPTS ── */}
       <Section title="Interrupt Controller" id="interrupts">
-        <p>Unified interrupt controller trait covering APIC, GIC, and PLIC — plus IPI delivery and exception classification:</p>
+        <p>{d("interrupts.intro")}</p>
         <RustCode filename="hal/src/interrupts.rs">{`/// ~18 methods covering the full interrupt lifecycle.
 pub trait InterruptController: Send + Sync {
     fn init(&mut self) -> Result<(), HalError>;
@@ -286,7 +281,7 @@ pub struct PageFaultInfo {
 
       {/* ── FIRMWARE ── */}
       <Section title="Firmware Interface" id="firmware">
-        <p>Abstraction over platform firmware — ACPI tables, power management, and system information:</p>
+        <p>{d("firmware.intro")}</p>
         <RustCode filename="hal/src/firmware.rs">{`pub trait FirmwareInterface: Send + Sync {
     fn firmware_type(&self) -> FirmwareType;
     fn version(&self) -> &str;
@@ -347,7 +342,7 @@ pub enum MemoryRegionType {
 
       {/* ── KASLR ── */}
       <Section title="KASLR" id="kaslr">
-        <p>Kernel Address Space Layout Randomization — 847 lines of entropy collection, address randomization, and kernel relocation. Supports <code className="text-helix-blue">nokaslr</code> and <code className="text-helix-blue">kaslr_entropy=N</code> kernel command-line arguments:</p>
+        <p>{d("kaslr.intro")}</p>
         <RustCode filename="hal/src/kaslr.rs">{`pub struct KaslrConfig {
     pub min_address: u64,     // Lowest allowed kernel base
     pub max_address: u64,     // Highest allowed kernel base
@@ -400,7 +395,7 @@ static KASLR_INITIALIZED: AtomicBool = AtomicBool::new(false);`}</RustCode>
 
       {/* ── RELOCATION ── */}
       <Section title="ELF Relocation Engine" id="relocation">
-        <p>Full ELF64 relocation support for Position-Independent Executables (PIE). Handles all x86_64 relocation types including GOT and PLT entries — 1,193 lines with comprehensive error handling:</p>
+        <p>{d("relocation.intro")}</p>
         <RustCode filename="hal/src/relocation.rs">{`pub enum RelocationType {
     Relative,      // R_X86_64_RELATIVE — base + addend
     Absolute64,    // R_X86_64_64 — S + A
@@ -445,7 +440,7 @@ pub struct RelocStats {
 
       {/* ── BACKENDS ── */}
       <Section title="Architecture Backends" id="backends">
-        <p>Each architecture provides a complete implementation of the HAL traits — here&apos;s what each backend includes:</p>
+        <p>{d("backends.intro")}</p>
         <div className="grid lg:grid-cols-3 gap-6 mt-6">
           <div className="bg-zinc-900/40 border border-zinc-800/40 rounded-xl p-6">
             <h4 className="text-white font-bold mb-3 text-lg">🖥️ x86_64 <span className="text-xs text-zinc-500 font-mono ml-2">~30K LoC / 60+ files</span></h4>
