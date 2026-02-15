@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/helix-wiki/components/Navbar";
+import { I18nProvider } from "@/helix-wiki/lib/i18n";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -153,8 +154,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en" translate="no" className="notranslate scroll-smooth">
       <head>
+        {/* Block browser auto-translation (Google Translate, Edge, etc.) */}
+        <meta name="google" content="notranslate" />
+        <meta httpEquiv="Content-Language" content="en" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -163,8 +167,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black text-white`}
       >
-        <Navbar />
-        {children}
+        <I18nProvider>
+          <Navbar />
+          <div id="main-content">
+            {children}
+          </div>
+        </I18nProvider>
       </body>
     </html>
   );
