@@ -1,28 +1,23 @@
-import type { Metadata } from "next";
+"use client";
+
 import PageHeader from "@/helix-wiki/components/PageHeader";
 import Section from "@/helix-wiki/components/Section";
 import RustCode from "@/helix-wiki/components/RustCode";
 import Footer from "@/helix-wiki/components/Footer";
-
-export const metadata: Metadata = {
-  title: "Core Kernel — TCB, Syscalls, IPC, Self-Heal & Hot-Reload",
-  description: "The Helix Trusted Computing Base: 6,397 lines orchestrating syscalls (512-entry dispatch), lock-free IPC (channels, event bus, message router), self-healing recovery, and live module hot-reload.",
-  alternates: { canonical: "/docs/core" },
-  openGraph: {
-    title: "Helix Core Kernel — Syscalls, IPC & Self-Healing",
-    description: "Complete reference for the kernel TCB: KernelComponent trait, capability broker, 6-arg syscall convention, three IPC primitives, crash recovery, and zero-downtime module replacement.",
-    url: "https://helix-wiki.com/docs/core",
-  },
-};
+import { useI18n } from "@/helix-wiki/lib/i18n";
+import { getDocString } from "@/helix-wiki/lib/docs-i18n";
+import coreContent from "@/helix-wiki/lib/docs-i18n/core";
 
 export default function CorePage() {
+  const { locale } = useI18n();
+  const d = (key: string) => getDocString(coreContent, locale, key);
   return (
     <div className="min-h-screen bg-black text-white">
-      <PageHeader title="Core Kernel" subtitle="The Trusted Computing Base — 6,397 lines across 25 files. Orchestration, IPC, syscalls, interrupts, self-healing, hot-reload, and a capability broker." badge="TCB" gradient="from-blue-400 to-indigo-500" />
+      <PageHeader title={d("header.title")} subtitle={d("header.subtitle")} badge={d("header.badge")} gradient="from-blue-400 to-indigo-500" />
 
       {/* ── MODULE MAP ── */}
       <Section title="Module Map" id="map">
-        <p>The core crate is organized into 7 modules with strict separation of concerns:</p>
+        <p>{d("map.intro")}</p>
         <div className="my-8 font-mono text-sm bg-zinc-900/50 border border-zinc-800/60 rounded-xl p-6 overflow-x-auto">
           <pre className="text-zinc-300">{`core/src/
 ├── lib.rs                    300 LoC   KernelState, KernelError, KernelComponent
@@ -61,7 +56,7 @@ export default function CorePage() {
 
       {/* ── KERNEL TYPES ── */}
       <Section title="Kernel Types" id="types">
-        <p>Fundamental types shared by every subsystem. These are the building blocks:</p>
+        <p>{d("types.intro")}</p>
         <RustCode filename="core/src/lib.rs">{`pub struct KernelVersion {
     pub major: u8,
     pub minor: u8,
@@ -119,7 +114,7 @@ pub trait KernelEventListener: Send + Sync {
 
       {/* ── KERNEL COMPONENT ── */}
       <Section title="KernelComponent Trait" id="component">
-        <p>Every kernel component implements this trait — providing a uniform lifecycle, health monitoring, and statistics interface:</p>
+        <p>{d("component.intro")}</p>
         <RustCode filename="core/src/lib.rs">{`/// The universal contract for all kernel components.
 /// This is the core abstraction — every subsystem, every module,
 /// every driver must implement this to participate in the kernel.
@@ -157,7 +152,7 @@ pub struct ComponentStats {
 
       {/* ── ORCHESTRATOR ── */}
       <Section title="Orchestrator" id="orchestrator">
-        <p>The orchestrator manages subsystem lifecycle, dependency ordering, and capability brokering. It&apos;s the heart of the kernel — but only defines <em>mechanisms</em>, not policies:</p>
+        <p>{d("orchestrator.intro")}</p>
         <RustCode filename="core/src/orchestrator/mod.rs">{`/// Every subsystem must implement this trait.
 /// The orchestrator uses it to manage boot ordering and shutdown.
 pub trait Subsystem: Send + Sync {
@@ -192,7 +187,7 @@ pub struct KernelOrchestrator {
     resource_broker: ResourceBroker,
 }`}</RustCode>
 
-        <h3 className="text-xl font-semibold text-white mt-10 mb-4">Lifecycle Manager</h3>
+        <h3 className="text-xl font-semibold text-white mt-10 mb-4">{d("orchestrator.lifecycle.title")}</h3>
         <RustCode filename="core/src/orchestrator/lifecycle.rs">{`pub enum LifecycleStage {
     PreBoot,    // Before any subsystem init
     EarlyInit,  // Critical subsystems (memory, interrupts)
@@ -215,8 +210,8 @@ pub struct LifecycleManager {
     boot_time: u64,
 }`}</RustCode>
 
-        <h3 className="text-xl font-semibold text-white mt-10 mb-4">Capability Broker</h3>
-        <p>Fine-grained access control with recursive revocation — capabilities propagate through a tree, and revoking a parent automatically revokes all children:</p>
+        <h3 className="text-xl font-semibold text-white mt-10 mb-4">{d("orchestrator.capability.title")}</h3>
+        <p>{d("orchestrator.capability.intro")}</p>
         <RustCode filename="core/src/orchestrator/capability_broker.rs">{`bitflags! {
     pub struct CapabilityRights: u32 {
         const READ        = 1 << 0;
@@ -243,7 +238,7 @@ pub struct CapabilityBroker {
     delegation_tree: BTreeMap<CapabilityId, Vec<CapabilityId>>,
 }`}</RustCode>
 
-        <h3 className="text-xl font-semibold text-white mt-10 mb-4">Resource Broker</h3>
+        <h3 className="text-xl font-semibold text-white mt-10 mb-4">{d("orchestrator.resource.title")}</h3>
         <RustCode filename="core/src/orchestrator/resource_broker.rs">{`pub enum ResourceClass {
     PhysicalMemory, VirtualMemory,
     InterruptLine, IoPort, DmaChannel,
@@ -263,7 +258,7 @@ pub trait ResourceProvider: Send + Sync {
 
       {/* ── SYSCALLS ── */}
       <Section title="Syscall Framework" id="syscalls">
-        <p>A 512-entry dispatch table with a 6-argument calling convention matching Linux errno semantics. Pre/post hooks enable tracing, security auditing, and performance profiling without modifying handlers:</p>
+        <p>{d("syscalls.intro")}</p>
         <RustCode filename="core/src/syscall/mod.rs">{`/// 6-register argument pack — matches the x86_64 ABI:
 /// rdi, rsi, rdx, r10, r8, r9
 pub struct SyscallArgs {
@@ -327,7 +322,7 @@ define_syscall! {
     },
 }`}</RustCode>
 
-        <h3 className="text-xl font-semibold text-white mt-10 mb-4">Hook System</h3>
+        <h3 className="text-xl font-semibold text-white mt-10 mb-4">{d("syscalls.hooks.title")}</h3>
         <RustCode filename="core/src/syscall/dispatcher.rs">{`pub struct SyscallDispatcher {
     registry: SyscallRegistry,
     pre_hooks: Vec<Box<dyn SyscallHook>>,
@@ -352,7 +347,7 @@ pub struct CallerContext {
     pub from_user: bool,  // true = user-mode, false = kernel
 }`}</RustCode>
 
-        <h3 className="text-xl font-semibold text-white mt-10 mb-4">Argument Validation</h3>
+        <h3 className="text-xl font-semibold text-white mt-10 mb-4">{d("syscalls.validation.title")}</h3>
         <RustCode filename="core/src/syscall/validation.rs">{`/// Fluent builder for syscall argument validation.
 pub struct ArgValidator { errors: Vec<SyscallError> }
 
@@ -374,9 +369,9 @@ pub fn validate_fd(fd: u64) -> Result<(), SyscallError>;`}</RustCode>
 
       {/* ── IPC ── */}
       <Section title="IPC — Inter-Process Communication" id="ipc">
-        <p>Three IPC primitives, each designed for a different communication pattern. All are lock-free or use minimal spinning:</p>
+        <p>{d("ipc.intro")}</p>
 
-        <h3 className="text-xl font-semibold text-white mt-8 mb-4">1. Channels — Bounded MPSC Ring Buffers</h3>
+        <h3 className="text-xl font-semibold text-white mt-8 mb-4">{d("ipc.channels.title")}</h3>
         <RustCode filename="core/src/ipc/channel.rs">{`/// Create a bounded multi-producer single-consumer channel.
 /// Backed by a lock-free ring buffer.
 pub fn channel<T: Send>(capacity: usize) -> (Sender<T>, Receiver<T>);
@@ -411,7 +406,7 @@ pub enum IpcError {
     BufferTooSmall,
 }`}</RustCode>
 
-        <h3 className="text-xl font-semibold text-white mt-10 mb-4">2. Event Bus — Pub/Sub with Priority</h3>
+        <h3 className="text-xl font-semibold text-white mt-10 mb-4">{d("ipc.eventbus.title")}</h3>
         <RustCode filename="core/src/ipc/event_bus.rs">{`pub enum EventTopic {
     System, Memory, Scheduler, Module, Device,
     Network, FileSystem, Security, Custom(u16),
@@ -449,7 +444,7 @@ impl KernelEventBus {
     pub fn unsubscribe(&mut self, id: SubscriberId) -> bool;
 }`}</RustCode>
 
-        <h3 className="text-xl font-semibold text-white mt-10 mb-4">3. Message Router — Request/Response</h3>
+        <h3 className="text-xl font-semibold text-white mt-10 mb-4">{d("ipc.router.title")}</h3>
         <RustCode filename="core/src/ipc/message_router.rs">{`/// Point-to-point inter-module communication.
 /// Each module registers a callback; others send typed requests.
 pub struct MessageRouter {
@@ -493,9 +488,9 @@ pub struct Response {
 
       {/* ── SELF HEAL ── */}
       <Section title="Self-Heal & Hot-Reload" id="selfheal">
-        <p>Two systems work together to keep the kernel running even when modules crash — the self-healing manager monitors health and triggers recovery, while hot-reload performs live module replacement:</p>
+        <p>{d("selfheal.intro")}</p>
 
-        <h3 className="text-xl font-semibold text-white mt-8 mb-4">Self-Healing Manager</h3>
+        <h3 className="text-xl font-semibold text-white mt-8 mb-4">{d("selfheal.manager.title")}</h3>
         <RustCode filename="core/src/selfheal.rs">{`pub enum HealthStatus {
     Healthy,        // Normal operation
     Degraded,       // Partial functionality
@@ -548,7 +543,7 @@ struct ModuleHealth {
     saved_state: Option<Vec<u8>>,
 }`}</RustCode>
 
-        <h3 className="text-xl font-semibold text-white mt-10 mb-4">Hot-Reload System</h3>
+        <h3 className="text-xl font-semibold text-white mt-10 mb-4">{d("selfheal.hotreload.title")}</h3>
         <RustCode filename="core/src/hotreload/mod.rs">{`/// Module categories that support hot-reload.
 pub enum ModuleType {
     Scheduler,       // DIS, Round-Robin, Priority
@@ -600,7 +595,7 @@ pub struct HotReloadRegistry {
     rollback_count: u64,
 }`}</RustCode>
 
-        <h3 className="text-xl font-semibold text-white mt-10 mb-4">Example: Live Scheduler Swap</h3>
+        <h3 className="text-xl font-semibold text-white mt-10 mb-4">{d("selfheal.example.title")}</h3>
         <RustCode filename="core/src/hotreload/schedulers.rs">{`/// Both RoundRobinScheduler and PriorityScheduler implement
 /// HotReloadableModule, enabling live scheduler replacement.
 ///
@@ -629,7 +624,7 @@ pub struct PriorityScheduler {
 
       {/* ── INTERRUPTS ── */}
       <Section title="Interrupt Infrastructure" id="interrupts">
-        <p>A 256-entry interrupt dispatch table with routing modes, exception handling, and default handlers for common faults:</p>
+        <p>{d("interrupts.intro")}</p>
         <RustCode filename="core/src/interrupts/mod.rs">{`/// 256-vector interrupt dispatch table.
 /// Vectors 0-31: CPU exceptions (page fault, GPF, double fault, etc.)
 /// Vectors 32-255: External interrupts (timer, keyboard, etc.)
@@ -687,7 +682,7 @@ pub struct ExceptionDispatcher {
 
       {/* ── DEBUG ── */}
       <Section title="Debug Console" id="debug">
-        <p>Kernel-space print macros that route through the debug console — supporting serial output and framebuffer rendering:</p>
+        <p>{d("debug.intro")}</p>
         <RustCode filename="core/src/debug/console.rs">{`/// Print macros — work in no_std, route through DebugInterface.
 ///
 /// kprint!("hello");              // No newline
@@ -713,7 +708,7 @@ pub trait DebugCommand: Send + Sync {
 
       {/* ── PANIC ── */}
       <Section title="Panic Handler" id="panic">
-        <p>Custom panic handling with configurable actions — the kernel never just crashes silently:</p>
+        <p>{d("panic.intro")}</p>
         <RustCode filename="core/src/orchestrator/panic_handler.rs">{`pub enum PanicAction {
     Halt,           // Halt CPU forever
     Reboot,         // Triple-fault reboot
