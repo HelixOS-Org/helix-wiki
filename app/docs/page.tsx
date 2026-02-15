@@ -1,20 +1,16 @@
-import type { Metadata } from "next";
+"use client";
+
 import Link from "next/link";
 import { docsNav } from "@/helix-wiki/lib/docsNav";
 import Footer from "@/helix-wiki/components/Footer";
-
-export const metadata: Metadata = {
-  title: "Documentation — Kernel Architecture, APIs & Guides",
-  description: "Complete technical documentation for Helix OS: kernel architecture, core subsystems, HAL, module system, HelixFS, NEXUS AI, and Lumina GPU. Written by and for systems developers.",
-  alternates: { canonical: "/docs" },
-  openGraph: {
-    title: "Helix OS Documentation — Kernel Architecture, APIs & Guides",
-    description: "Deep-dive into every layer of the Helix kernel. Covers architecture, syscalls, IPC, memory management, scheduling, hot-reload modules, filesystem, and AI intelligence.",
-    url: "https://helix-wiki.com/docs",
-  },
-};
+import { useI18n } from "@/helix-wiki/lib/i18n";
+import { getDocString } from "@/helix-wiki/lib/docs-i18n";
+import docsIndexContent from "@/helix-wiki/lib/docs-i18n/docs-index";
 
 export default function DocsIndexPage() {
+  const { locale } = useI18n();
+  const d = (key: string) => getDocString(docsIndexContent, locale, key);
+
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Hero */}
@@ -22,17 +18,16 @@ export default function DocsIndexPage() {
         <div className="max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-helix-purple/10 border border-helix-purple/20 text-helix-purple text-xs font-mono mb-6">
             <span className="w-2 h-2 rounded-full bg-helix-purple animate-pulse" />
-            v0.4.0 Aurora
+            {d("hero.badge")}
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
-            Helix OS{" "}
+            {d("hero.title.1")}{" "}
             <span className="bg-gradient-to-r from-helix-blue to-helix-purple bg-clip-text text-transparent">
-              Documentation
+              {d("hero.title.2")}
             </span>
           </h1>
           <p className="mt-4 text-lg text-zinc-400 max-w-2xl leading-relaxed">
-            Everything you need to understand, use, and contribute to Helix — from architecture
-            overview to deep-dive API references for every subsystem.
+            {d("hero.subtitle")}
           </p>
         </div>
       </section>
