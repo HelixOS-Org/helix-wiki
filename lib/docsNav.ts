@@ -20,6 +20,24 @@ export interface DocGroup {
 
 export const docsNav: DocGroup[] = [
   {
+    label: "Getting Started",
+    pages: [
+      {
+        href: "/docs/getting-started",
+        title: "Quick Start",
+        icon: "🚀",
+        sections: [
+          { id: "prerequisites", title: "Prerequisites" },
+          { id: "installation", title: "Installation" },
+          { id: "build", title: "Building the Kernel" },
+          { id: "qemu", title: "Running in QEMU" },
+          { id: "first-mod", title: "First Modification" },
+          { id: "structure", title: "Project Structure" },
+        ],
+      },
+    ],
+  },
+  {
     label: "Overview",
     pages: [
       {
@@ -36,6 +54,18 @@ export const docsNav: DocGroup[] = [
           { id: "linker", title: "Linker Scripts" },
           { id: "boot", title: "Boot Sequence" },
           { id: "commands", title: "Build Commands" },
+        ],
+      },
+      {
+        href: "/docs/architectures",
+        title: "CPU Architectures",
+        icon: "🖥️",
+        sections: [
+          { id: "comparison", title: "Architecture Comparison" },
+          { id: "x86_64", title: "x86_64" },
+          { id: "aarch64", title: "AArch64" },
+          { id: "riscv", title: "RISC-V 64" },
+          { id: "hal-trait", title: "HAL Trait Unification" },
         ],
       },
     ],
@@ -171,6 +201,68 @@ export const docsNav: DocGroup[] = [
           { id: "magma", title: "Magma GPU Driver" },
           { id: "sync", title: "GPU Synchronization" },
           { id: "scale", title: "Codebase Scale" },
+        ],
+      },
+    ],
+  },
+  {
+    label: "Drivers & Performance",
+    pages: [
+      {
+        href: "/docs/drivers",
+        title: "Device Drivers",
+        icon: "🔌",
+        sections: [
+          { id: "overview", title: "Driver Architecture" },
+          { id: "magma", title: "Magma GPU Driver" },
+          { id: "planned", title: "Planned Drivers" },
+          { id: "writing", title: "Writing a Driver" },
+        ],
+      },
+      {
+        href: "/docs/benchmarks",
+        title: "Benchmarks",
+        icon: "📊",
+        sections: [
+          { id: "architecture", title: "Suite Architecture" },
+          { id: "config", title: "Configuration" },
+          { id: "scheduler", title: "Scheduler Benchmarks" },
+          { id: "memory", title: "Memory Benchmarks" },
+          { id: "statistics", title: "Statistical Analysis" },
+          { id: "running", title: "Running Benchmarks" },
+        ],
+      },
+    ],
+  },
+  {
+    label: "Development",
+    pages: [
+      {
+        href: "/docs/debugging",
+        title: "Debugging",
+        icon: "🐛",
+        sections: [
+          { id: "overview", title: "Debug Architecture" },
+          { id: "build", title: "Debug Build" },
+          { id: "serial", title: "Serial Console" },
+          { id: "qemu", title: "QEMU Debugging" },
+          { id: "gdb", title: "GDB Integration" },
+          { id: "crash", title: "Crash Analysis" },
+          { id: "memory", title: "Memory Debugging" },
+          { id: "tools", title: "Debug Tools" },
+        ],
+      },
+      {
+        href: "/docs/profiles",
+        title: "OS Builder Profiles",
+        icon: "📦",
+        sections: [
+          { id: "overview", title: "Overview" },
+          { id: "profiles", title: "Available Profiles" },
+          { id: "config", title: "helix.toml Reference" },
+          { id: "create", title: "Creating a Profile" },
+          { id: "modules", title: "Module Selection" },
+          { id: "linker", title: "Linker Scripts" },
         ],
       },
     ],
