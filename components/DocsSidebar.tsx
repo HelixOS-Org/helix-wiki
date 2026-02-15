@@ -12,24 +12,72 @@ function useActiveSection(sections: DocSection[]): string | null {
 
   useEffect(() => {
     if (sections.length === 0) return;
+
+    // Track which sections are currently visible
+    const visibleSet = new Map<string, IntersectionObserverEntry>();
+
     const observer = new IntersectionObserver(
       (entries) => {
-        // pick the first one that's intersecting
+        // Update visibility map
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            setActive(entry.target.id);
-            break;
+            visibleSet.set(entry.target.id, entry);
+          } else {
+            visibleSet.delete(entry.target.id);
           }
         }
+
+        if (visibleSet.size === 0) return;
+
+        // Pick the section closest to the top of the viewport
+        let best: string | null = null;
+        let bestTop = Infinity;
+
+        for (const [id, entry] of visibleSet) {
+          const top = entry.boundingClientRect.top;
+          if (top < bestTop) {
+            bestTop = top;
+            best = id;
+          }
+        }
+
+        if (best) setActive(best);
       },
-      { rootMargin: "-80px 0px -60% 0px", threshold: 0 }
+      {
+        // Navbar is ~64px, detect within the top 40% of the viewport
+        rootMargin: "-80px 0px -55% 0px",
+        threshold: [0, 0.25, 0.5, 0.75, 1],
+      }
     );
 
     for (const s of sections) {
       const el = document.getElementById(s.id);
       if (el) observer.observe(el);
     }
-    return () => observer.disconnect();
+
+    // Also track scroll for edge cases (very short sections, bottom of page)
+    const onScroll = () => {
+      const scrollBottom = window.innerHeight + window.scrollY;
+      const docHeight = document.documentElement.scrollHeight;
+
+      // If at bottom of page, activate last section
+      if (docHeight - scrollBottom < 50 && sections.length > 0) {
+        setActive(sections[sections.length - 1].id);
+        return;
+      }
+
+      // If at top of page, activate first section
+      if (window.scrollY < 100 && sections.length > 0) {
+        setActive(sections[0].id);
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", onScroll);
+    };
   }, [sections]);
 
   return active;
@@ -37,7 +85,11 @@ function useActiveSection(sections: DocSection[]): string | null {
 
 /* ──────────────── Sidebar Component ──────────────── */
 export default function DocsSidebar() {
-  const pathname = usePathname();
+  const rawPathname = usePathname();
+  // Normalize: remove trailing slash for comparison (trailingSlash: true in next.config)
+  const pathname = rawPathname.endsWith("/") && rawPathname !== "/"
+    ? rawPathname.slice(0, -1)
+    : rawPathname;
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Find current page's sections
@@ -68,57 +120,90 @@ export default function DocsSidebar() {
 
       {/* Nav tree */}
       <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-5 sidebar-scroll">
-        {docsNav.map((group) => (
-          <div key={group.label}>
-            <div className="px-2 mb-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-600">
-              {group.label}
-            </div>
-            <ul className="space-y-0.5">
-              {group.pages.map((page) => {
-                const isActive = pathname === page.href;
-                return (
-                  <li key={page.href}>
-                    {/* Page link */}
-                    <Link
-                      href={page.href}
-                      className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-200
-                        ${isActive
-                          ? "bg-white/[0.07] text-white shadow-[inset_0_0_0_1px_rgba(123,104,238,0.2)]"
-                          : "text-zinc-400 hover:text-white hover:bg-white/[0.04]"
-                        }`}
-                    >
-                      <span className="text-base leading-none">{page.icon}</span>
-                      {page.title}
-                    </Link>
+        {docsNav.map((group) => {
+          /* Check if ANY page in this group is active */
+          const groupHasActive = group.pages.some((p) => pathname === p.href);
 
-                    {/* Section anchors — only show for active page */}
-                    {isActive && page.sections.length > 0 && (
-                      <ul className="mt-1 ml-4 pl-3 border-l border-white/[0.06] space-y-0.5">
-                        {page.sections.map((section) => {
-                          const isSectionActive = activeSection === section.id;
-                          return (
-                            <li key={section.id}>
-                              <a
-                                href={`#${section.id}`}
-                                className={`block px-2.5 py-1.5 rounded-md text-[13px] transition-all duration-200
-                                  ${isSectionActive
-                                    ? "text-helix-blue bg-helix-blue/[0.08] font-medium"
-                                    : "text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.03]"
-                                  }`}
-                              >
-                                {section.title}
-                              </a>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
+          return (
+            <div key={group.label}>
+              {/* Group label — glows when group contains active page */}
+              <div
+                className={`px-2 mb-1.5 text-[10px] font-bold uppercase tracking-[0.15em] transition-colors duration-300
+                  ${groupHasActive
+                    ? "text-helix-purple drop-shadow-[0_0_6px_rgba(123,104,238,0.5)]"
+                    : "text-zinc-600"
+                  }`}
+              >
+                {groupHasActive && (
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-helix-purple mr-1.5 align-middle shadow-[0_0_6px_rgba(123,104,238,0.6)] animate-pulse" />
+                )}
+                {group.label}
+              </div>
+              <ul className="space-y-0.5">
+                {group.pages.map((page) => {
+                  const isActive = pathname === page.href;
+                  return (
+                    <li key={page.href} className="relative">
+                      {/* Active indicator bar */}
+                      {isActive && (
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-gradient-to-b from-helix-blue to-helix-purple shadow-[0_0_8px_rgba(74,144,226,0.6)]" />
+                      )}
+
+                      {/* Page link */}
+                      <Link
+                        href={page.href}
+                        className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-200
+                          ${isActive
+                            ? "bg-gradient-to-r from-helix-blue/[0.08] to-helix-purple/[0.06] text-white shadow-[inset_0_0_0_1px_rgba(123,104,238,0.25)] ml-1"
+                            : "text-zinc-400 hover:text-white hover:bg-white/[0.04]"
+                          }`}
+                      >
+                        <span className={`text-base leading-none transition-transform duration-200 ${isActive ? "scale-110" : ""}`}>
+                          {page.icon}
+                        </span>
+                        <span className={isActive ? "text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-300" : ""}>
+                          {page.title}
+                        </span>
+                        {isActive && (
+                          <span className="ml-auto text-[9px] font-semibold uppercase tracking-wider text-helix-blue/60">
+                            active
+                          </span>
+                        )}
+                      </Link>
+
+                      {/* Section anchors — only show for active page */}
+                      {isActive && page.sections.length > 0 && (
+                        <ul className="mt-1 ml-5 pl-3 border-l-2 border-helix-purple/20 space-y-0.5">
+                          {page.sections.map((section) => {
+                            const isSectionActive = activeSection === section.id;
+                            return (
+                              <li key={section.id} className="relative">
+                                {/* Section active dot */}
+                                {isSectionActive && (
+                                  <div className="absolute -left-[calc(0.75rem+1px)] top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-helix-blue shadow-[0_0_8px_rgba(74,144,226,0.7)]" />
+                                )}
+                                <a
+                                  href={`#${section.id}`}
+                                  className={`block px-2.5 py-1.5 rounded-md text-[13px] transition-all duration-200
+                                    ${isSectionActive
+                                      ? "text-helix-blue bg-helix-blue/[0.1] font-medium shadow-[inset_0_0_0_1px_rgba(74,144,226,0.15)]"
+                                      : "text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.03]"
+                                    }`}
+                                >
+                                  {section.title}
+                                </a>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          );
+        })}
       </nav>
 
       {/* Footer links */}
