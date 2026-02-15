@@ -1,32 +1,28 @@
-import type { Metadata } from "next";
+"use client";
+
 import PageHeader from "@/helix-wiki/components/PageHeader";
 import Section from "@/helix-wiki/components/Section";
 import RustCode from "@/helix-wiki/components/RustCode";
 import InfoTable from "@/helix-wiki/components/InfoTable";
 import Footer from "@/helix-wiki/components/Footer";
+import { useI18n } from "@/helix-wiki/lib/i18n";
+import { getDocString } from "@/helix-wiki/lib/docs-i18n";
+import subsystemsContent from "@/helix-wiki/lib/docs-i18n/subsystems";
 
-export const metadata: Metadata = {
-  title: "Subsystems — Memory, Execution, DIS Scheduler & Init Phases",
-  description: "Helix kernel subsystems: physical frame allocator, virtual memory manager, heap allocator, execution engine with context switching, DIS pluggable scheduler, and 5-phase init boot sequence.",
-  alternates: { canonical: "/docs/subsystems" },
-  openGraph: {
-    title: "Helix Subsystems — Memory Management & Scheduling",
-    description: "Deep dive into the kernel subsystems: buddy allocator, 4-level page tables, thread lifecycle, Dynamic Intelligent Scheduling, and the early-boot to userspace init pipeline.",
-    url: "https://helix-wiki.com/docs/subsystems",
-  },
-};
 import FlowDiagram from "@/helix-wiki/components/diagrams/FlowDiagram";
 
 export default function SubsystemsPage() {
+  const { locale } = useI18n();
+  const d = (key: string) => getDocString(subsystemsContent, locale, key);
   return (
     <div className="min-h-screen bg-black text-white">
-      <PageHeader title="Subsystems" subtitle="Seven subsystems bridge the gap between the core TCB and the module layer — memory, execution, DIS scheduling, init framework, relocation, userspace, and early boot." badge="SUBSYSTEM SERVICES" gradient="from-orange-400 to-rose-500" />
+      <PageHeader title={d("header.title")} subtitle={d("header.subtitle")} badge={d("header.badge")} gradient="from-orange-400 to-rose-500" />
 
       {/* ── MEMORY ── */}
       <Section title="Memory Subsystem" id="memory">
-        <p>Physical frame allocation + virtual address space mapping — 2,047 lines across 12 files. The subsystem only provides <em>mechanisms</em>; allocation <em>policy</em> lives in pluggable modules.</p>
+        <p>{d("memory.intro")}</p>
 
-        <h3 className="text-xl font-semibold text-white mt-8 mb-4">Error Types & Primitives</h3>
+        <h3 className="text-xl font-semibold text-white mt-8 mb-4">{d("memory.errors.title")}</h3>
         <RustCode filename="subsystems/memory/src/lib.rs">{`pub enum MemError {
     OutOfMemory,
     InvalidAddress,
@@ -60,7 +56,7 @@ pub enum MemoryZone {
     Reserved,  // BIOS, firmware, ACPI
 }`}</RustCode>
 
-        <h3 className="text-xl font-semibold text-white mt-10 mb-4">Physical Allocator</h3>
+        <h3 className="text-xl font-semibold text-white mt-10 mb-4">{d("memory.physical.title")}</h3>
         <RustCode filename="subsystems/memory/src/physical.rs">{`/// The physical allocator trait — implementations are hot-swappable.
 pub trait PhysicalAllocator: Send + Sync {
     /// Allocate 'count' contiguous physical frames.
@@ -98,7 +94,7 @@ pub struct BuddyAllocator {
 }
 // MAX_ORDER = 10 → max allocation = 2^10 * 4K = 4 MiB`}</RustCode>
 
-        <h3 className="text-xl font-semibold text-white mt-10 mb-4">Virtual Memory Manager</h3>
+        <h3 className="text-xl font-semibold text-white mt-10 mb-4">{d("memory.virtual.title")}</h3>
         <RustCode filename="subsystems/memory/src/virtual_manager.rs">{`pub trait VirtualMapper: Send + Sync {
     fn map(&mut self, virt: VirtAddr, phys: PhysAddr,
            size: PageSize, flags: PageFlags) -> Result<(), MemError>;
@@ -112,7 +108,7 @@ pub struct BuddyAllocator {
     fn switch_address_space(&mut self, id: AddressSpaceId) -> Result<(), MemError>;
 }`}</RustCode>
 
-        <h3 className="text-xl font-semibold text-white mt-10 mb-4">Kernel Heap Allocators</h3>
+        <h3 className="text-xl font-semibold text-white mt-10 mb-4">{d("memory.heap.title")}</h3>
         <RustCode filename="subsystems/memory/src/heap.rs">{`/// Slab allocator: fixed-size object pools.
 /// Perfect for frequently allocated kernel objects (threads, inodes, etc.)
 pub struct SlabAllocator {
@@ -134,7 +130,7 @@ pub struct BumpAllocator {
 
       {/* ── EXECUTION ── */}
       <Section title="Execution Subsystem" id="execution">
-        <p>Thread and process lifecycle management — 2,150 lines across 14 files. Defines the structures that DIS schedules:</p>
+        <p>{d("execution.intro")}</p>
 
         <RustCode filename="subsystems/execution/src/lib.rs">{`pub struct ThreadId(AtomicU64);   // Auto-incrementing, unique
 pub struct ProcessId(AtomicU64);  // Auto-incrementing, unique
@@ -181,7 +177,7 @@ pub enum BlockReason {
     WaitingForPage,             // Page fault resolution
 }`}</RustCode>
 
-        <h3 className="text-xl font-semibold text-white mt-10 mb-4">Scheduler Trait</h3>
+        <h3 className="text-xl font-semibold text-white mt-10 mb-4">{d("execution.scheduler.title")}</h3>
         <RustCode filename="subsystems/execution/src/scheduler.rs">{`/// The scheduler trait — DIS and Round-Robin both implement this.
 /// Hot-swappable: schedulers can be replaced at runtime.
 pub trait Scheduler: Send + Sync {
@@ -223,7 +219,7 @@ pub struct SchedulerStats {
 
       {/* ── DIS ── */}
       <Section title="DIS — Dynamic Intent Scheduler" id="dis">
-        <p>Helix&apos;s crown jewel — 11,573 lines across 11 files. DIS doesn&apos;t schedule threads by priority alone; it understands task <em>intent</em> and adapts in real time. Tasks declare what they <em>want to do</em>, and DIS finds the optimal scheduling strategy:</p>
+        <p>{d("dis.intro")}</p>
 
         <RustCode filename="subsystems/dis/src/intent.rs">{`pub enum IntentClass {
     Interactive,   // Low-latency UI tasks (mouse, keyboard)
@@ -261,7 +257,7 @@ impl IntentBuilder {
     pub fn build(self) -> TaskDescriptor;
 }`}</RustCode>
 
-        <h3 className="text-xl font-semibold text-white mt-10 mb-4">DIS Scheduler Core</h3>
+        <h3 className="text-xl font-semibold text-white mt-10 mb-4">{d("dis.core.title")}</h3>
         <RustCode filename="subsystems/dis/src/scheduler.rs">{`pub struct DisScheduler {
     queues: MultiLevelFeedbackQueue,
     intent_classifier: IntentClassifier,
@@ -305,7 +301,7 @@ impl DisScheduler {
     pub fn system_stats(&self) -> SystemStats;
 }`}</RustCode>
 
-        <h3 className="text-xl font-semibold text-white mt-10 mb-4">Intent-to-Timeslice Mapping</h3>
+        <h3 className="text-xl font-semibold text-white mt-10 mb-4">{d("dis.mapping.title")}</h3>
         <InfoTable
           columns={[
             { header: "Intent", key: "intent" },
@@ -324,7 +320,7 @@ impl DisScheduler {
           ]}
         />
 
-        <h3 className="text-xl font-semibold text-white mt-10 mb-4">DIS Modules</h3>
+        <h3 className="text-xl font-semibold text-white mt-10 mb-4">{d("dis.modules.title")}</h3>
         <InfoTable
           columns={[
             { header: "Module", key: "module" },
@@ -346,7 +342,7 @@ impl DisScheduler {
 
       {/* ── INIT ── */}
       <Section title="Init Framework" id="init">
-        <p>DAG-based initialization system — 17,673 lines across 23 files. Supports up to 512 subsystems with 64-level dependency depth, topological sort, and automatic rollback on failure:</p>
+        <p>{d("init.intro")}</p>
 
         <RustCode filename="subsystems/init/src/lib.rs">{`pub const MAX_SUBSYSTEMS: usize = 512;
 pub const MAX_DEPENDENCY_DEPTH: usize = 64;
@@ -376,7 +372,7 @@ pub fn initialize_kernel(config: ExecutorConfig) -> InitResult<()>;
 pub fn shutdown_kernel() -> InitResult<()>;
 pub fn is_initialized() -> bool;`}</RustCode>
 
-        <h3 className="text-xl font-semibold text-white mt-10 mb-4">Init Task DAG</h3>
+        <h3 className="text-xl font-semibold text-white mt-10 mb-4">{d("init.dag.title")}</h3>
         <RustCode filename="subsystems/init/src/task.rs">{`pub struct InitTask {
     pub name: &'static str,
     pub phase: InitPhase,
@@ -392,7 +388,7 @@ pub fn is_initialized() -> bool;`}</RustCode>
 // If a task fails → all tasks that depend on it are skipped,
 // then rollback functions are called in reverse order.`}</RustCode>
 
-        <h3 className="text-xl font-semibold text-white mt-10 mb-4">14 Built-in Subsystem Inits</h3>
+        <h3 className="text-xl font-semibold text-white mt-10 mb-4">{d("init.builtins.title")}</h3>
         <InfoTable
           columns={[
             { header: "Subsystem", key: "subsystem" },
@@ -418,31 +414,32 @@ pub fn is_initialized() -> bool;`}</RustCode>
         />
 
         <FlowDiagram
+          title="Init Subsystem Boot Sequence"
           note="◄── rollback direction (on failure) ──►"
           phases={[
-            { title: "Boot", color: "blue", nodes: [
-              { label: "serial", color: "blue" },
-              { label: "memory", color: "blue" },
-              { label: "interrupts", color: "blue" },
+            { title: "Boot", color: "blue", description: "Earliest kernel initialization — serial console, physical memory manager, and interrupt vectors must be online before anything else.", nodes: [
+              { label: "serial", color: "blue", info: { description: "Serial console driver (COM1/COM2). Provides the first output channel for early boot diagnostics and panic messages.", duration: "~2 ms", priority: "critical", dependencies: [], outputs: ["kprint!()", "COM1 port"], errorHandler: "Triple-fault (no fallback)" } },
+              { label: "memory", color: "blue", info: { description: "Physical memory manager: parses memory map from bootloader, initializes frame allocator and page tables.", duration: "~15 ms", priority: "critical", dependencies: ["serial"], outputs: ["FrameAllocator", "PageTable", "HHDM mapping"], errorHandler: "Panic — cannot continue without memory" } },
+              { label: "interrupts", color: "blue", info: { description: "Sets up IDT (Interrupt Descriptor Table), programs PIC/APIC, and registers exception handlers (page fault, GPF, etc.).", duration: "~5 ms", priority: "critical", dependencies: ["memory"], outputs: ["IDT", "APIC", "Exception handlers"], errorHandler: "Panic — unhandled interrupts cause triple-fault" } },
             ]},
-            { title: "Early", color: "cyan", nodes: [
-              { label: "timer", color: "cyan" },
-              { label: "scheduler", color: "cyan" },
+            { title: "Early", color: "cyan", description: "Timer and scheduler are needed before any concurrent work can happen. These enable preemptive multitasking.", nodes: [
+              { label: "timer", color: "cyan", info: { description: "Configures HPET/PIT/APIC timer for periodic ticks. Drives the scheduler and provides kernel time source.", duration: "~3 ms", priority: "high", dependencies: ["interrupts"], outputs: ["Tick source", "sleep()", "Uptime counter"], errorHandler: "Fallback to PIT if HPET unavailable" } },
+              { label: "scheduler", color: "cyan", info: { description: "Initializes the CFS-style scheduler with per-CPU run queues, idle tasks, and priority management.", duration: "~8 ms", priority: "high", dependencies: ["timer", "memory"], outputs: ["spawn()", "yield_now()", "Run queues"], errorHandler: "Panic — kernel requires a scheduler" } },
             ]},
-            { title: "Core", color: "purple", nodes: [
-              { label: "ipc", color: "purple" },
-              { label: "syscalls", color: "purple" },
-              { label: "modules", color: "purple" },
+            { title: "Core", color: "purple", description: "Inter-process communication, system calls, and the module framework form the kernel's service backbone.", nodes: [
+              { label: "ipc", color: "purple", info: { description: "Initializes IPC channels, event bus (pub/sub), and message router for inter-module communication.", duration: "~4 ms", priority: "high", dependencies: ["scheduler"], outputs: ["EventBus", "MessageRouter", "SharedMemory"], errorHandler: "Degrade to synchronous-only IPC" } },
+              { label: "syscalls", color: "purple", info: { description: "Registers the 512-entry syscall dispatch table and installs the SYSCALL/SYSRET MSR handlers.", duration: "~2 ms", priority: "high", dependencies: ["ipc"], outputs: ["SyscallDispatcher", "512 syscall entries"], errorHandler: "Panic — userspace requires syscalls" } },
+              { label: "modules", color: "purple", info: { description: "Module registry and loader: resolves module dependencies, verifies ABI compatibility, and initializes the module lifecycle state machine.", duration: "~10 ms", priority: "high", dependencies: ["syscalls", "ipc"], outputs: ["ModuleRegistry", "load()/unload() API"], errorHandler: "Log warning, continue without optional modules" } },
             ]},
-            { title: "Late", color: "amber", nodes: [
-              { label: "vfs", color: "amber" },
-              { label: "network", color: "amber" },
-              { label: "devices", color: "amber" },
-              { label: "security", color: "amber" },
+            { title: "Late", color: "amber", description: "Higher-level services: filesystem, networking, device drivers, and security framework are brought online.", nodes: [
+              { label: "vfs", color: "amber", info: { description: "Virtual File System layer: mounts root filesystem, initializes inode cache, dentry cache, and POSIX file operations.", duration: "~20 ms", priority: "normal", dependencies: ["modules"], outputs: ["VFS", "mount()", "open()/read()/write()"], errorHandler: "Mount ramfs as fallback root" } },
+              { label: "network", color: "amber", info: { description: "Network stack initialization: loopback interface, TCP/IP stack, socket layer, and DNS resolver.", duration: "~12 ms", priority: "normal", dependencies: ["modules", "vfs"], outputs: ["Socket API", "TCP/UDP", "Loopback"], errorHandler: "Skip — network is optional at boot" } },
+              { label: "devices", color: "amber", info: { description: "Device enumeration: PCI bus scan, USB controller init, and driver matching via the module system.", duration: "~25 ms", priority: "normal", dependencies: ["modules"], outputs: ["DeviceTree", "PCI devices", "USB stack"], errorHandler: "Log missing drivers, continue" } },
+              { label: "security", color: "amber", info: { description: "Security framework: capability system, MAC policy engine, audit logging, and secure random initialization.", duration: "~8 ms", priority: "normal", dependencies: ["vfs", "modules"], outputs: ["Capabilities", "MAC policy", "Audit log"], errorHandler: "Default to permissive mode with warnings" } },
             ]},
-            { title: "Runtime", color: "green", nodes: [
-              { label: "userspace", color: "green" },
-              { label: "shell", color: "green" },
+            { title: "Runtime", color: "green", description: "Userspace is launched and the interactive shell starts — the kernel is fully operational.", nodes: [
+              { label: "userspace", color: "green", info: { description: "Creates the initial userspace process (PID 1 / init), sets up user page tables, and transitions to Ring 3.", duration: "~30 ms", priority: "high", dependencies: ["vfs", "syscalls", "security"], outputs: ["PID 1", "User page tables", "Ring 3 execution"], errorHandler: "Kernel panic — no init process" } },
+              { label: "shell", color: "green", info: { description: "Launches the Helix interactive shell (hsh) as the first user-facing process with stdio connected to serial/VGA.", duration: "~15 ms", priority: "low", dependencies: ["userspace"], outputs: ["hsh process", "stdio streams"], errorHandler: "Respawn shell on crash (3 attempts)" } },
             ]},
           ]}
         />
@@ -450,7 +447,7 @@ pub fn is_initialized() -> bool;`}</RustCode>
 
       {/* ── RELOCATION ── */}
       <Section title="Relocation Subsystem" id="relocation">
-        <p>PIE/KASLR relocation engine — 4,093 lines across 12 files. Handles the full lifecycle from ELF parsing to runtime relocation:</p>
+        <p>{d("relocation.intro")}</p>
         <RustCode filename="subsystems/relocation/src/lib.rs">{`pub enum RelocError {
     InvalidElfMagic,
     InvalidElfClass,
@@ -497,7 +494,7 @@ pub enum BootProtocol {
 
       {/* ── USERSPACE ── */}
       <Section title="Userspace Subsystem" id="userspace">
-        <p>ELF loader, process runtime, and a built-in shell — 3,407 lines across 7 files:</p>
+        <p>{d("userspace.intro")}</p>
         <RustCode filename="subsystems/userspace/src/lib.rs">{`pub enum UserError {
     ElfError(ElfError),
     InvalidProgram,
@@ -521,7 +518,7 @@ pub struct UserspaceCapabilities {
     pub has_filesystem: bool,
 }`}</RustCode>
 
-        <h3 className="text-xl font-semibold text-white mt-10 mb-4">Userspace Modules</h3>
+        <h3 className="text-xl font-semibold text-white mt-10 mb-4">{d("userspace.modules.title")}</h3>
         <InfoTable
           columns={[
             { header: "Module", key: "module" },
@@ -540,7 +537,7 @@ pub struct UserspaceCapabilities {
 
       {/* ── EARLY BOOT ── */}
       <Section title="Early Boot Subsystem" id="earlyboot">
-        <p>The first code that runs after the bootloader — 23,802 lines across 33 files. Handles the transition from bootloader to kernel, including per-architecture hardware initialization:</p>
+        <p>{d("earlyboot.intro")}</p>
         <RustCode filename="boot/src/lib.rs">{`pub struct BootConfig {
     pub kaslr_enabled: bool,          // default: true
     pub kaslr_entropy_bits: u8,       // default: 12
@@ -586,7 +583,7 @@ bitflags! {
     }
 }`}</RustCode>
 
-        <h3 className="text-xl font-semibold text-white mt-10 mb-4">Per-Architecture Early Boot</h3>
+        <h3 className="text-xl font-semibold text-white mt-10 mb-4">{d("earlyboot.perarch.title")}</h3>
         <div className="grid md:grid-cols-3 gap-4 mt-4">
           <div className="bg-zinc-900/40 border border-zinc-800/40 rounded-xl p-5">
             <h4 className="text-white font-semibold mb-2">x86_64</h4>
