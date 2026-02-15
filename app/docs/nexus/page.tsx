@@ -1,30 +1,25 @@
-import type { Metadata } from "next";
+"use client";
+
 import PageHeader from "@/helix-wiki/components/PageHeader";
 import Section from "@/helix-wiki/components/Section";
 import RustCode from "@/helix-wiki/components/RustCode";
 import InfoTable from "@/helix-wiki/components/InfoTable";
 import Footer from "@/helix-wiki/components/Footer";
-
-export const metadata: Metadata = {
-  title: "NEXUS — AI-Powered Kernel Intelligence: Prediction, Detection & Quarantine",
-  description: "NEXUS: 812K lines of kernel intelligence. Custom no_std ML framework for crash prediction, anomaly detection, resource optimization, thermal management, and module quarantine.",
-  alternates: { canonical: "/docs/nexus" },
-  openGraph: {
-    title: "NEXUS — Machine Learning Inside the Kernel",
-    description: "The AI brain of Helix OS: tensor operations, gradient descent, predictive crash analysis, statistical outlier detection, and automatic quarantine escalation — all running at ring 0.",
-    url: "https://helix-wiki.com/docs/nexus",
-  },
-};
+import { useI18n } from "@/helix-wiki/lib/i18n";
+import { getDocString } from "@/helix-wiki/lib/docs-i18n";
+import nexusContent from "@/helix-wiki/lib/docs-i18n/nexus";
 import FileTree from "@/helix-wiki/components/diagrams/FileTree";
 
 export default function NexusPage() {
+  const { locale } = useI18n();
+  const d = (key: string) => getDocString(nexusContent, locale, key);
   return (
     <div className="min-h-screen bg-black text-white">
-      <PageHeader title="NEXUS" subtitle="812,081 lines across 2,346 files — the AI-driven self-healing intelligence layer. 90+ modules spanning machine learning, crash prediction, anomaly detection, quarantine, and autonomous optimization." badge="AI ENGINE" gradient="from-emerald-400 to-cyan-500" />
+      <PageHeader title={d("header.title")} subtitle={d("header.subtitle")} badge={d("header.badge")} gradient="from-emerald-400 to-cyan-500" />
 
       {/* ── OVERVIEW ── */}
       <Section title="Architecture Overview" id="overview">
-        <p>NEXUS is a kernel-integrated AI subsystem that monitors every facet of the operating system — predicting failures before they happen, detecting anomalies in real time, quarantining misbehaving components, and autonomously healing the system. It operates across 7 intelligence levels:</p>
+        <p>{d("overview.intro")}</p>
 
         <RustCode filename="subsystems/nexus/src/lib.rs">{`pub struct Nexus {
     level: NexusLevel,
@@ -87,7 +82,7 @@ impl Nexus {
 
       {/* ── MODULES ── */}
       <Section title="Module Inventory" id="modules">
-        <p>NEXUS is the largest subsystem in Helix — 90+ modules organized into functional domains. Here is a representative sample:</p>
+        <p>{d("inventory.intro")}</p>
         <InfoTable
           columns={[
             { header: "Domain", key: "domain" },
@@ -110,9 +105,9 @@ impl Nexus {
 
       {/* ── ML FRAMEWORK ── */}
       <Section title="Machine Learning Framework" id="ml">
-        <p>NEXUS includes a complete, <code className="text-helix-blue">no_std</code> machine learning framework built from scratch — no TensorFlow, no Python, no external dependencies. All inference runs in kernel space:</p>
+        <p>{d("ml.intro")}</p>
 
-        <h3 className="text-xl font-semibold text-white mt-8 mb-4">Decision Tree</h3>
+        <h3 className="text-xl font-semibold text-white mt-8 mb-4">{d("ml.tree.title")}</h3>
         <RustCode filename="subsystems/nexus/src/ml/decision_tree.rs">{`pub struct DecisionTree {
     root: Option<Box<TreeNode>>,
     max_depth: usize,
@@ -142,7 +137,7 @@ impl DecisionTree {
     pub fn feature_importance(&self) -> Vec<f64>;
 }`}</RustCode>
 
-        <h3 className="text-xl font-semibold text-white mt-8 mb-4">Random Forest</h3>
+        <h3 className="text-xl font-semibold text-white mt-8 mb-4">{d("ml.forest.title")}</h3>
         <RustCode filename="subsystems/nexus/src/ml/random_forest.rs">{`pub struct RandomForest {
     trees: Vec<DecisionTree>,
     n_estimators: usize,        // Number of trees (default: 100)
@@ -164,7 +159,7 @@ impl RandomForest {
     pub fn oob_score(&self) -> f64;
 }`}</RustCode>
 
-        <h3 className="text-xl font-semibold text-white mt-8 mb-4">Neural Network</h3>
+        <h3 className="text-xl font-semibold text-white mt-8 mb-4">{d("ml.nn.title")}</h3>
         <RustCode filename="subsystems/nexus/src/ml/neural_net.rs">{`pub struct NeuralNetwork {
     layers: Vec<Layer>,
     learning_rate: f64,
@@ -204,7 +199,7 @@ impl NeuralNetwork {
     pub fn predict(&self, input: &[f64]) -> Vec<f64>;
 }`}</RustCode>
 
-        <h3 className="text-xl font-semibold text-white mt-8 mb-4">K-Means Clustering</h3>
+        <h3 className="text-xl font-semibold text-white mt-8 mb-4">{d("ml.kmeans.title")}</h3>
         <RustCode filename="subsystems/nexus/src/ml/k_means.rs">{`pub struct KMeans {
     k: usize,                    // Number of clusters
     centroids: Vec<Vec<f64>>,
@@ -220,7 +215,7 @@ impl KMeans {
     pub fn silhouette_score(&self, data: &[Vec<f64>]) -> f64;
 }`}</RustCode>
 
-        <h3 className="text-xl font-semibold text-white mt-8 mb-4">Online Learner</h3>
+        <h3 className="text-xl font-semibold text-white mt-8 mb-4">{d("ml.online.title")}</h3>
         <RustCode filename="subsystems/nexus/src/ml/online_learner.rs">{`/// Incremental learning — update models with single samples in real-time.
 /// Critical for kernel use: no batch training needed, adapts continuously.
 pub trait OnlineLearner {
@@ -233,7 +228,7 @@ pub trait OnlineLearner {
 
       {/* ── CRASH PREDICTION ── */}
       <Section title="Crash Prediction" id="prediction">
-        <p>The crash predictor uses a 13-feature model to predict failures before they occur. Features are extracted from live kernel telemetry — memory pressure, CPU temperature, error rates, and more:</p>
+        <p>{d("crash.intro")}</p>
         <RustCode filename="subsystems/nexus/src/prediction/crash_predictor.rs">{`pub struct CrashPredictor {
     model: RandomForest,           // 100-tree ensemble
     feature_extractor: FeatureExtractor,
@@ -296,7 +291,7 @@ impl CrashPredictor {
 
       {/* ── ANOMALY DETECTION ── */}
       <Section title="Anomaly Detection" id="anomaly">
-        <p>Real-time anomaly detection using statistical models and time-series analysis. Tracks per-component behavior baselines and flags deviations:</p>
+        <p>{d("anomaly.intro")}</p>
         <RustCode filename="subsystems/nexus/src/anomaly/detector.rs">{`pub struct AnomalyDetector {
     baselines: BTreeMap<ComponentId, Baseline>,
     sensitivity: f64,           // Standard deviations for threshold
@@ -357,7 +352,7 @@ impl AnomalyDetector {
 
       {/* ── QUARANTINE ── */}
       <Section title="Quarantine System" id="quarantine">
-        <p>When NEXUS detects a misbehaving component, it can isolate it in a quarantine zone — limiting resources and preventing cascading failures while keeping the rest of the system running:</p>
+        <p>{d("quarantine.intro")}</p>
         <RustCode filename="subsystems/nexus/src/quarantine/manager.rs">{`pub struct QuarantineManager {
     quarantined: BTreeMap<ComponentId, QuarantineEntry>,
     policies: Vec<IsolationPolicy>,
@@ -413,7 +408,7 @@ impl QuarantineManager {
 
       {/* ── ROADMAP ── */}
       <Section title="Development Roadmap" id="roadmap">
-        <p>NEXUS is designed with a 4-year evolution roadmap. Each phase builds on the previous, progressively increasing the AI&apos;s autonomy and capability:</p>
+        <p>{d("roadmap.intro")}</p>
         <InfoTable
           columns={[
             { header: "Phase", key: "phase" },
@@ -442,64 +437,82 @@ impl QuarantineManager {
         <p>Breakdown of the NEXUS codebase by functional domain:</p>
         <FileTree title="subsystems/nexus/" tree={[
           { name: "src", icon: "folder", children: [
-            { name: "lib.rs", detail: "Core Nexus struct, levels, state machine" },
-            { name: "config.rs", detail: "Configuration & thresholds" },
-            { name: "ml", icon: "folder", children: [
-              { name: "decision_tree.rs" },
-              { name: "random_forest.rs" },
-              { name: "neural_net.rs" },
-              { name: "k_means.rs" },
-              { name: "svm.rs" },
-              { name: "online_learner.rs" },
-              { name: "feature_scaling.rs" },
+            { name: "lib.rs", detail: "Core Nexus struct, levels, state machine",
+              info: { loc: 1850, language: "Rust", description: "Main NEXUS entry point: defines NexusLevel enum (L0–L5), NexusState, and the central Nexus struct that orchestrates all subsystems. Contains the main tick() loop and level transition logic.", status: "stable", exports: ["Nexus", "NexusLevel", "NexusState", "NexusConfig"] } },
+            { name: "config.rs", detail: "Configuration & thresholds",
+              info: { loc: 420, language: "Rust", description: "Runtime-tunable configuration for NEXUS: anomaly thresholds, healing retry limits, prediction confidence thresholds, and telemetry intervals.", status: "stable", exports: ["NexusConfig", "AnomalyThresholds", "HealingConfig"] } },
+            { name: "ml", icon: "folder", detail: "Machine Learning engines",
+              info: { loc: 8500, description: "Complete no_std ML framework: decision trees, random forests, neural networks, k-means clustering, SVMs, and online learning — all in pure Rust with no external deps.", status: "stable" },
+              children: [
+              { name: "decision_tree.rs", info: { loc: 1200, language: "Rust", description: "CART-based decision tree with Gini impurity splitting, max-depth pruning, and feature importance tracking.", status: "stable", exports: ["DecisionTree", "TreeNode", "SplitCriterion"] } },
+              { name: "random_forest.rs", info: { loc: 1400, language: "Rust", description: "Ensemble of decision trees with bootstrap aggregation (bagging). Supports parallel prediction and out-of-bag error estimation.", status: "stable", exports: ["RandomForest", "ForestConfig", "BaggingStrategy"] } },
+              { name: "neural_net.rs", info: { loc: 1800, language: "Rust", description: "Feed-forward neural network with backpropagation. Supports ReLU/Sigmoid/Tanh activations and mini-batch SGD training.", status: "wip", exports: ["NeuralNetwork", "Layer", "Activation", "Optimizer"] } },
+              { name: "k_means.rs", info: { loc: 850, language: "Rust", description: "K-means++ clustering with Lloyd's algorithm. Used for anomaly grouping and workload classification.", status: "stable", exports: ["KMeans", "Cluster", "Centroid"] } },
+              { name: "svm.rs", info: { loc: 1100, language: "Rust", description: "Support Vector Machine with RBF kernel. Binary and multi-class classification via one-vs-rest.", status: "wip", exports: ["SVM", "Kernel", "HyperPlane"] } },
+              { name: "online_learner.rs", info: { loc: 950, language: "Rust", description: "Incremental online learning: updates models with streaming data without full retraining. Key for runtime adaptation.", status: "stable", exports: ["OnlineLearner", "StreamingUpdate"] } },
+              { name: "feature_scaling.rs", info: { loc: 600, language: "Rust", description: "Feature normalization (min-max, z-score, robust scaling) and dimensionality reduction via PCA.", status: "stable", exports: ["Scaler", "PCA", "FeatureVector"] } },
             ]},
-            { name: "prediction", icon: "folder", children: [
-              { name: "crash_predictor.rs" },
-              { name: "feature_extractor.rs" },
-              { name: "failure_classifier.rs" },
-              { name: "action_selector.rs" },
+            { name: "prediction", icon: "folder", detail: "Crash prediction pipeline",
+              info: { loc: 4200, description: "Proactive failure prediction: extracts system features, classifies failure types, estimates crash probability, and selects preventive actions.", status: "stable" },
+              children: [
+              { name: "crash_predictor.rs", info: { loc: 1300, language: "Rust", description: "Main prediction engine: combines ML models with heuristic rules to estimate per-module crash probability within the next N ticks.", status: "stable", exports: ["CrashPredictor", "PredictionResult", "RiskLevel"] } },
+              { name: "feature_extractor.rs", info: { loc: 900, language: "Rust", description: "Extracts features from telemetry: CPU usage, memory pressure, syscall rates, error counts, and timing distributions.", status: "stable", exports: ["FeatureExtractor", "SystemSnapshot"] } },
+              { name: "failure_classifier.rs", info: { loc: 1100, language: "Rust", description: "Classifies failures into categories (memory, deadlock, resource exhaustion, corruption) to select appropriate recovery strategy.", status: "stable", exports: ["FailureClassifier", "FailureType"] } },
+              { name: "action_selector.rs", info: { loc: 900, language: "Rust", description: "Selects preventive/corrective actions based on failure classification and available recovery strategies.", status: "stable", exports: ["ActionSelector", "RecoveryAction"] } },
             ]},
-            { name: "anomaly", icon: "folder", children: [
-              { name: "detector.rs" },
-              { name: "statistical_model.rs" },
-              { name: "time_series.rs" },
-              { name: "pattern_matcher.rs" },
+            { name: "anomaly", icon: "folder", detail: "Anomaly detection",
+              info: { loc: 3800, description: "Multi-layered anomaly detection: statistical models, time series analysis, and pattern matching detect deviations before they become failures.", status: "stable" },
+              children: [
+              { name: "detector.rs", info: { loc: 1100, language: "Rust", description: "Central anomaly detector: aggregates signals from statistical, time-series, and pattern engines to produce anomaly scores.", status: "stable", exports: ["AnomalyDetector", "AnomalyScore", "DetectionResult"] } },
+              { name: "statistical_model.rs", info: { loc: 900, language: "Rust", description: "Statistical anomaly detection via z-score, MAD (Median Absolute Deviation), and Grubbs' test for outlier identification.", status: "stable", exports: ["StatisticalModel", "OutlierTest"] } },
+              { name: "time_series.rs", info: { loc: 1000, language: "Rust", description: "Time series analysis with exponential smoothing, trend detection, and seasonality decomposition for workload patterns.", status: "stable", exports: ["TimeSeries", "TrendDetector", "Seasonality"] } },
+              { name: "pattern_matcher.rs", info: { loc: 800, language: "Rust", description: "Pattern-based anomaly detection: matches known failure signatures against current system behavior.", status: "stable", exports: ["PatternMatcher", "FailureSignature"] } },
             ]},
-            { name: "quarantine", icon: "folder", children: [
-              { name: "manager.rs" },
-              { name: "isolation_policy.rs" },
-              { name: "resource_fence.rs" },
-              { name: "rollback.rs" },
+            { name: "quarantine", icon: "folder", detail: "Module isolation",
+              info: { loc: 3200, description: "Isolates failing modules to prevent cascade failures: resource fences, capability revocation, and state rollback.", status: "stable" },
+              children: [
+              { name: "manager.rs", info: { loc: 1000, language: "Rust", description: "Quarantine lifecycle manager: tracks quarantined modules, manages isolation levels, and coordinates recovery attempts.", status: "stable", exports: ["QuarantineManager", "QuarantineEntry"] } },
+              { name: "isolation_policy.rs", info: { loc: 700, language: "Rust", description: "Policy engine for isolation decisions: severity thresholds, auto-quarantine rules, and escalation paths.", status: "stable", exports: ["IsolationPolicy", "SeverityLevel"] } },
+              { name: "resource_fence.rs", info: { loc: 800, language: "Rust", description: "Hardware-enforced resource limits: memory caps, CPU time quotas, and I/O bandwidth throttling for quarantined modules.", status: "stable", exports: ["ResourceFence", "FenceConfig"] } },
+              { name: "rollback.rs", info: { loc: 700, language: "Rust", description: "State rollback engine: restores module state from checkpoints when recovery requires undoing recent changes.", status: "stable", exports: ["RollbackEngine", "Checkpoint"] } },
             ]},
-            { name: "healing", icon: "folder", children: [
-              { name: "self_healer.rs" },
-              { name: "recovery_strategy.rs" },
-              { name: "state_checkpoint.rs" },
-              { name: "hot_swap.rs" },
+            { name: "healing", icon: "folder", detail: "Self-healing engine",
+              info: { loc: 4500, description: "Autonomous recovery: restart, hot-swap, state restoration, and progressive escalation from gentle fixes to full module replacement.", status: "stable" },
+              children: [
+              { name: "self_healer.rs", info: { loc: 1400, language: "Rust", description: "Central healing orchestrator: selects and executes recovery strategies, tracks success rates, and learns from past recoveries.", status: "stable", exports: ["SelfHealer", "HealingResult", "RecoveryStats"] } },
+              { name: "recovery_strategy.rs", info: { loc: 1100, language: "Rust", description: "Recovery strategy definitions: restart, hot-reload, state-restore, dependency-cascade, and full-replacement strategies.", status: "stable", exports: ["RecoveryStrategy", "StrategyType"] } },
+              { name: "state_checkpoint.rs", info: { loc: 1000, language: "Rust", description: "Periodic state checkpointing: serializes module state to kernel memory for fast rollback without disk I/O.", status: "stable", exports: ["StateCheckpoint", "CheckpointStore"] } },
+              { name: "hot_swap.rs", info: { loc: 1000, language: "Rust", description: "Hot-swap engine: replaces a running module with a new version while preserving connections and in-flight state.", status: "wip", exports: ["HotSwap", "SwapPlan", "MigrationState"] } },
             ]},
-            { name: "optimizer", icon: "folder", children: [
-              { name: "perf_optimizer.rs" },
-              { name: "scheduler_tuner.rs" },
-              { name: "memory_advisor.rs" },
-              { name: "cache_policy.rs" },
+            { name: "optimizer", icon: "folder", detail: "Performance optimization",
+              info: { loc: 3600, description: "Runtime performance tuning: scheduler parameters, memory allocation policies, and cache eviction strategies — all adapted by ML.", status: "stable" },
+              children: [
+              { name: "perf_optimizer.rs", info: { loc: 1000, language: "Rust", description: "Central optimizer: collects performance metrics, runs optimization models, and applies tuning recommendations.", status: "stable", exports: ["PerfOptimizer", "OptimizationResult"] } },
+              { name: "scheduler_tuner.rs", info: { loc: 900, language: "Rust", description: "Dynamically adjusts scheduler parameters: time slice duration, priority boosts, and CPU affinity based on workload patterns.", status: "stable", exports: ["SchedulerTuner", "SchedulerParams"] } },
+              { name: "memory_advisor.rs", info: { loc: 900, language: "Rust", description: "Memory allocation advisor: recommends page sizes, slab configurations, and compaction triggers based on allocation patterns.", status: "stable", exports: ["MemoryAdvisor", "AllocationAdvice"] } },
+              { name: "cache_policy.rs", info: { loc: 800, language: "Rust", description: "Adaptive cache eviction: switches between LRU, LFU, and ARC policies based on access pattern analysis.", status: "stable", exports: ["CachePolicy", "EvictionStrategy"] } },
             ]},
-            { name: "telemetry", icon: "folder", children: [
-              { name: "metrics_collector.rs" },
-              { name: "event_bus.rs" },
-              { name: "trace_buffer.rs" },
-              { name: "health_monitor.rs" },
+            { name: "telemetry", icon: "folder", detail: "Metrics & monitoring",
+              info: { loc: 3400, description: "System-wide telemetry: metric collection, event bus integration, ring buffer traces, and real-time health monitoring.", status: "stable" },
+              children: [
+              { name: "metrics_collector.rs", info: { loc: 1000, language: "Rust", description: "High-performance metrics collector: lock-free counters, histograms, and gauges with per-CPU aggregation.", status: "stable", exports: ["MetricsCollector", "Counter", "Histogram", "Gauge"] } },
+              { name: "event_bus.rs", info: { loc: 800, language: "Rust", description: "NEXUS-specific event bus: publishes anomaly detections, healing actions, and optimization recommendations to subscribers.", status: "stable", exports: ["NexusEventBus", "NexusEvent"] } },
+              { name: "trace_buffer.rs", info: { loc: 900, language: "Rust", description: "Lock-free ring buffer for execution traces: captures last N events for post-mortem analysis with zero steady-state allocation.", status: "stable", exports: ["TraceBuffer", "TraceEntry"] } },
+              { name: "health_monitor.rs", info: { loc: 700, language: "Rust", description: "Continuous health monitoring: heartbeat checks, resource usage tracking, and degradation detection for all kernel modules.", status: "stable", exports: ["HealthMonitor", "HealthStatus", "Heartbeat"] } },
             ]},
-            { name: "roadmap", icon: "folder", detail: "450K+ lines of future-phase code", children: [
-              { name: "q1_hardening", icon: "folder" },
-              { name: "q2_prediction", icon: "folder" },
-              { name: "q3_healing", icon: "folder" },
-              { name: "q4_performance", icon: "folder" },
-              { name: "y2_cognition", icon: "folder" },
-              { name: "y3_evolution", icon: "folder" },
-              { name: "y4_symbiosis", icon: "folder" },
+            { name: "roadmap", icon: "folder", detail: "450K+ lines of future-phase code",
+              info: { loc: 450000, description: "Multi-year evolution roadmap: from hardening (Q1) through cognitive AI (Y2) to symbiotic kernel evolution (Y4).", status: "wip" },
+              children: [
+              { name: "q1_hardening", icon: "folder", info: { description: "Q1: Stability hardening — fuzzing, stress testing, edge case coverage", status: "wip" } },
+              { name: "q2_prediction", icon: "folder", info: { description: "Q2: Advanced prediction — LSTM models, causal inference, failure forecasting", status: "new" } },
+              { name: "q3_healing", icon: "folder", info: { description: "Q3: Advanced healing — multi-module coordinated recovery, state migration", status: "new" } },
+              { name: "q4_performance", icon: "folder", info: { description: "Q4: Performance evolution — JIT tuning, speculative optimization", status: "new" } },
+              { name: "y2_cognition", icon: "folder", info: { description: "Y2: Cognitive kernel — intent inference, natural language kernel queries", status: "new" } },
+              { name: "y3_evolution", icon: "folder", info: { description: "Y3: Self-evolution — kernel auto-generates optimization patches", status: "new" } },
+              { name: "y4_symbiosis", icon: "folder", info: { description: "Y4: Symbiotic OS — kernel and user co-evolve through feedback loops", status: "new" } },
             ]},
           ]},
-          { name: "Cargo.toml" },
+          { name: "Cargo.toml", info: { loc: 45, language: "TOML", description: "NEXUS crate manifest: dependencies on core, hal, and ML libraries. Feature flags for prediction levels.", status: "stable" } },
         ]} />
       </Section>
 
