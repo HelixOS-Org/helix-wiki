@@ -1,4 +1,5 @@
-import type { Metadata } from "next";
+"use client";
+
 import PageHeader from "@/helix-wiki/components/PageHeader";
 import Section from "@/helix-wiki/components/Section";
 import RustCode from "@/helix-wiki/components/RustCode";
@@ -6,60 +7,64 @@ import InfoTable from "@/helix-wiki/components/InfoTable";
 import Footer from "@/helix-wiki/components/Footer";
 import LayerStack from "@/helix-wiki/components/diagrams/LayerStack";
 import DependencyGraph from "@/helix-wiki/components/diagrams/DependencyGraph";
-
-export const metadata: Metadata = {
-  title: "Architecture — 5-Layer Kernel Design & Crate Dependency Graph",
-  description: "Explore the Helix OS 5-layer architecture: HAL → Core → Subsystems → Modules → Userspace. ~20 Rust crates, strict dependency rules, and custom linker scripts for bare-metal targets.",
-  alternates: { canonical: "/docs/architecture" },
-  openGraph: {
-    title: "Helix OS Architecture — Layered Kernel Design in Rust",
-    description: "5-layer separation of concerns: HAL for hardware abstraction, Core for TCB orchestration, Subsystems for memory and scheduling, Modules for extensibility, and Userspace bridge.",
-    url: "https://helix-wiki.com/docs/architecture",
-  },
-};
+import { useI18n } from "@/helix-wiki/lib/i18n";
+import { getDocString } from "@/helix-wiki/lib/docs-i18n";
+import architectureContent from "@/helix-wiki/lib/docs-i18n/architecture";
 
 export default function ArchitecturePage() {
+  const { locale } = useI18n();
+  const d = (key: string) => getDocString(architectureContent, locale, key);
   return (
     <div className="min-h-screen bg-black text-white">
       <PageHeader
-        title="Architecture"
-        subtitle="Helix follows a strict layered architecture where each layer only depends on the one below it. 1.37 million lines of Rust across ~3,300 files — zero external C dependencies, pure no_std."
-        badge="DESIGN PHILOSOPHY"
+        title={d("header.title")}
+        subtitle={d("header.subtitle")}
+        badge={d("header.badge")}
       />
 
       {/* ── LAYER STACK ── */}
       <Section title="Layer Stack" id="layers">
-        <p>The kernel is composed of five major layers. Each layer is a separate crate (or group of crates) in the Cargo workspace, with clear dependency boundaries. The golden rule: <strong className="text-white">mechanism, not policy</strong>. The core kernel never decides <em>what</em> to do — it only provides the tools for modules to decide.</p>
+        <p>{d("layers.intro")}</p>
         <LayerStack layers={[
-          { label: "Modules (Schedulers, Drivers, Filesystems, Security)", detail: "Policy layer", color: "purple" },
-          { label: "Subsystems (Memory, Execution, DIS, Init, NEXUS)", detail: "Services", color: "blue" },
-          { label: "Core Kernel (Orchestrator, IPC, Syscall, Self-Heal)", detail: "TCB · 6.4K LoC", color: "cyan" },
-          { label: "HAL (CPU, MMU, Interrupts, Firmware, KASLR)", detail: "HW abstraction", color: "amber" },
-          { label: "Boot (Limine / UEFI / Multiboot2)", detail: "Protocol", color: "green" },
+          { label: "Modules (Schedulers, Drivers, Filesystems, Security)", detail: "Policy layer", color: "purple",
+            description: "Hot-swappable policy modules implementing scheduling, filesystem, security, and driver logic. All replaceable at runtime via trait-based interfaces.",
+            info: { components: ["CFS Scheduler", "EDF Scheduler", "VFS Driver", "Firewall Module", "GPU Driver"], metrics: [{ label: "Modules", value: "12+", color: "#7B68EE" }, { label: "Hot-Swap", value: "Oui", color: "#22C55E" }], api: ["ModuleTrait::init()", "ModuleTrait::cleanup()", "register_module()"], status: "active" } },
+          { label: "Subsystems (Memory, Execution, DIS, Init, NEXUS)", detail: "Services", color: "blue",
+            description: "Core services bridging hardware abstraction with module policies. Manages memory allocation, process execution, device initialization, and AI-driven optimization.",
+            info: { components: ["Memory Manager", "Execution Engine", "DIS (Device Init)", "Init Framework", "NEXUS AI"], metrics: [{ label: "LoC", value: "~200K" }, { label: "Subsystems", value: "6", color: "#4A90E2" }], api: ["alloc_pages()", "spawn_process()", "nexus_predict()"], dependencies: ["core", "hal"], status: "active" } },
+          { label: "Core Kernel (Orchestrator, IPC, Syscall, Self-Heal)", detail: "TCB · 6.4K LoC", color: "cyan",
+            description: "Minimal Trusted Computing Base — only mechanism, never policy. Provides IPC channels, syscall dispatch, event routing, and self-healing coordination. Entire TCB fits in ~6,400 lines.",
+            info: { components: ["Orchestrator", "IPC Engine", "Syscall Table", "Self-Heal Monitor", "Event Router"], metrics: [{ label: "LoC", value: "6,400", color: "#22D3EE" }, { label: "Fichiers", value: "25" }, { label: "Sécurité", value: "TCB", color: "#EF4444" }], api: ["ipc_send()", "ipc_recv()", "syscall_dispatch()", "self_heal()"], status: "critical" } },
+          { label: "HAL (CPU, MMU, Interrupts, Firmware, KASLR)", detail: "HW abstraction", color: "amber",
+            description: "Hardware Abstraction Layer supporting x86_64, AArch64, and RISC-V. Handles CPU initialization, memory mapping, interrupt routing, firmware queries, and KASLR randomization.",
+            info: { components: ["CPU Init", "MMU/Page Tables", "IDT/GDT", "ACPI Parser", "KASLR Engine"], metrics: [{ label: "Arch.", value: "3", color: "#F59E0B" }, { label: "LoC", value: "~61K" }], api: ["map_page()", "handle_interrupt()", "read_msr()"], dependencies: ["boot"], status: "active" } },
+          { label: "Boot (Limine / UEFI / Multiboot2)", detail: "Protocol", color: "green",
+            description: "Multi-protocol boot support — the kernel can boot via Limine, UEFI, or Multiboot2. Each protocol adapter translates boot info into a unified BootContext structure.",
+            info: { components: ["Limine Adapter", "UEFI Adapter", "Multiboot2 Adapter"], metrics: [{ label: "Protocoles", value: "3", color: "#22C55E" }], api: ["BootContext::memory_map()", "BootContext::framebuffer()"], status: "active" } },
         ]} />
         <div className="grid md:grid-cols-2 gap-4 mt-6">
           <div className="bg-zinc-900/40 border border-zinc-800/40 rounded-xl p-5">
-            <h4 className="text-white font-semibold mb-2">🔒 Trusted Computing Base</h4>
-            <p className="text-sm text-zinc-400">Only the Core crate (~6,400 lines) is trusted. It defines IPC, syscall dispatch, the orchestrator trait, and event routing — but never implements scheduling policies, allocation strategies, or filesystem logic.</p>
+            <h4 className="text-white font-semibold mb-2">{d("layers.tcb.title")}</h4>
+            <p className="text-sm text-zinc-400">{d("layers.tcb.desc")}</p>
           </div>
           <div className="bg-zinc-900/40 border border-zinc-800/40 rounded-xl p-5">
-            <h4 className="text-white font-semibold mb-2">🔌 Hot-Swappable Everything</h4>
-            <p className="text-sm text-zinc-400">Schedulers, memory allocators, and even filesystem drivers can be replaced at runtime via the hot-reload system. Modules save state → new version loads → state is restored — zero downtime.</p>
+            <h4 className="text-white font-semibold mb-2">{d("layers.hotswap.title")}</h4>
+            <p className="text-sm text-zinc-400">{d("layers.hotswap.desc")}</p>
           </div>
           <div className="bg-zinc-900/40 border border-zinc-800/40 rounded-xl p-5">
-            <h4 className="text-white font-semibold mb-2">🧠 AI-Integrated</h4>
-            <p className="text-sm text-zinc-400">NEXUS (812K lines) provides crash prediction, anomaly detection, self-healing, and ML-based optimization. The kernel doesn&apos;t just run — it <em>learns</em>.</p>
+            <h4 className="text-white font-semibold mb-2">{d("layers.ai.title")}</h4>
+            <p className="text-sm text-zinc-400">{d("layers.ai.desc")}</p>
           </div>
           <div className="bg-zinc-900/40 border border-zinc-800/40 rounded-xl p-5">
-            <h4 className="text-white font-semibold mb-2">🏗️ Multi-Architecture</h4>
-            <p className="text-sm text-zinc-400">x86_64 (primary, APIC/IOAPIC/x2APIC), AArch64 (GICv2/v3, PSCI), RISC-V 64 (PLIC/CLINT, SBI). Same HAL trait — different backends.</p>
+            <h4 className="text-white font-semibold mb-2">{d("layers.multiarch.title")}</h4>
+            <p className="text-sm text-zinc-400">{d("layers.multiarch.desc")}</p>
           </div>
         </div>
       </Section>
 
       {/* ── WORKSPACE ── */}
       <Section title="Workspace Structure" id="workspace">
-        <p>The project is a Cargo workspace with <strong className="text-white">15 active member crates</strong> and 2 excluded (graphics workspace + boot/src):</p>
+        <p>{d("workspace.intro")}</p>
         <RustCode filename="Cargo.toml" language="toml">{`[workspace]
 resolver = "2"
 
@@ -91,8 +96,8 @@ members = [
 
 exclude = ["graphics", "boot/src"]`}</RustCode>
 
-        <h3 className="text-xl font-semibold text-white mt-10 mb-4">Workspace Dependencies</h3>
-        <p>All crates share pinned dependency versions through the workspace — ensuring consistency and reproducibility:</p>
+        <h3 className="text-xl font-semibold text-white mt-10 mb-4">{d("workspace.deps.title")}</h3>
+        <p>{d("workspace.deps.intro")}</p>
         <InfoTable
           columns={[
             { header: "Crate", key: "crate" },
@@ -117,44 +122,69 @@ exclude = ["graphics", "boot/src"]`}</RustCode>
 
       {/* ── DEPENDENCY GRAPH ── */}
       <Section title="Crate Dependency Graph" id="deps">
-        <p>Each arrow means &quot;depends on&quot;. The boot layer is at the bottom; modules at the top. The TCB (<code className="text-helix-blue">core</code>) has minimal dependencies:</p>
+        <p>{d("deps.intro")}</p>
         <DependencyGraph
+          title="Crate Dependency Graph"
           width={820}
           height={650}
           nodes={[
-            { id: "profiles", label: "profiles/", detail: "Bootable images", x: 340, y: 10, width: 140, height: 40, color: "zinc" },
-            { id: "nexus", label: "nexus", detail: "812K LoC", x: 100, y: 90, width: 130, height: 40, color: "emerald" },
-            { id: "modules", label: "modules", detail: "framework", x: 345, y: 90, width: 130, height: 40, color: "purple" },
-            { id: "benchmarks", label: "benchmarks", detail: "", x: 590, y: 90, width: 130, height: 40, color: "zinc" },
-            { id: "subsystems", label: "subsystems/", detail: "memory · execution · dis · init · userspace · relocation", x: 210, y: 180, width: 400, height: 50, color: "blue" },
-            { id: "core", label: "core", detail: "TCB · 6.4K LoC", x: 340, y: 280, width: 140, height: 42, color: "cyan" },
-            { id: "hal", label: "hal", detail: "HW abstraction", x: 340, y: 370, width: 140, height: 42, color: "amber" },
-            { id: "limine", label: "limine", x: 190, y: 460, width: 110, height: 36, color: "green" },
-            { id: "multiboot2", label: "multiboot2", x: 355, y: 460, width: 110, height: 36, color: "green" },
-            { id: "uefi", label: "uefi", x: 520, y: 460, width: 110, height: 36, color: "green" },
-            { id: "lumina", label: "Lumina", detail: "197K LoC · 14 crates", x: 80, y: 560, width: 180, height: 44, color: "pink" },
-            { id: "helixfs", label: "HelixFS", detail: "42K LoC · 0 deps", x: 560, y: 560, width: 180, height: 44, color: "orange" },
+            { id: "profiles", label: "profiles/", detail: "Bootable images", x: 340, y: 10, width: 140, height: 40, color: "zinc",
+              tooltip: "Build profiles for different targets",
+              info: { description: "Bootable image profiles that combine kernel, modules, and configuration into deployable ISO/disk images.", status: "stable", stats: [{ label: "Targets", value: "3" }, { label: "Type", value: "Build" }], features: ["Limine ISO profile", "UEFI disk profile", "QEMU test profile"] } },
+            { id: "nexus", label: "nexus", detail: "812K LoC", x: 100, y: 90, width: 130, height: 40, color: "emerald",
+              tooltip: "AI/ML-powered kernel intelligence engine",
+              info: { description: "NEXUS is the AI brain of Helix — 812K lines of ML models, anomaly detectors, crash predictors, and self-healing logic. Runs entirely in kernel space with no_std.", status: "wip", loc: "812K LoC", stats: [{ label: "ML Models", value: "6" }, { label: "Prédiction", value: "✓" }, { label: "Quarantine", value: "✓" }, { label: "Self-Heal", value: "✓" }], features: ["Decision trees & Random forests", "Neural network inference", "Crash prediction & failure classification", "Anomaly detection via statistical models", "Quarantine isolation & resource fencing", "Hot-swap & live recovery"] } },
+            { id: "modules", label: "modules", detail: "framework", x: 345, y: 90, width: 130, height: 40, color: "purple",
+              tooltip: "Module system framework & trait definitions",
+              info: { description: "The module framework defines ModuleTrait, lifecycle state machine, hot-reload protocol, and module registry. All kernel extensions implement these traits.", status: "stable", stats: [{ label: "Traits", value: "4" }, { label: "États", value: "9" }], features: ["ModuleTrait lifecycle", "Hot-reload protocol", "Module registry", "Capability-based permissions"] } },
+            { id: "benchmarks", label: "benchmarks", detail: "", x: 590, y: 90, width: 130, height: 40, color: "zinc",
+              tooltip: "Performance benchmarks for kernel components",
+              info: { description: "Benchmark suite measuring IPC latency, context switch time, memory allocation throughput, and syscall overhead.", status: "stable", features: ["IPC latency measurement", "Context switch benchmarks", "Allocation throughput tests"] } },
+            { id: "subsystems", label: "subsystems/", detail: "memory · execution · dis · init · userspace · relocation", x: 210, y: 180, width: 400, height: 50, color: "blue",
+              tooltip: "6 core subsystems bridging HW and modules",
+              info: { description: "Six subsystems providing core OS services: virtual memory management, process execution, device initialization, boot sequencing, userspace transition, and binary relocation.", status: "stable", loc: "~200K LoC", stats: [{ label: "Subsystems", value: "6" }, { label: "LoC", value: "~200K" }], features: ["Virtual memory with demand paging", "Multi-core process scheduling", "Ordered device initialization with rollback", "ELF loading & relocation", "Userspace ring-3 transition", "Init dependency graph with phases"] } },
+            { id: "core", label: "core", detail: "TCB · 6.4K LoC", x: 340, y: 280, width: 140, height: 42, color: "cyan",
+              tooltip: "Trusted Computing Base — minimal kernel core",
+              info: { description: "The Trusted Computing Base — only ~6,400 lines of code that must be correct. Implements IPC, syscall dispatch, orchestrator, and event routing. Mechanism only, never policy.", status: "stable", loc: "6.4K LoC", version: "0.1.0", stats: [{ label: "LoC", value: "6,400" }, { label: "Fichiers", value: "25" }, { label: "Sécurité", value: "TCB" }], features: ["Zero-copy IPC channels", "Capability-based syscall dispatch", "Orchestrator trait for module coordination", "Self-healing event monitor", "Minimal attack surface"] } },
+            { id: "hal", label: "hal", detail: "HW abstraction", x: 340, y: 370, width: 140, height: 42, color: "amber",
+              tooltip: "Hardware Abstraction for x86_64, AArch64, RISC-V",
+              info: { description: "Multi-architecture HAL supporting x86_64, AArch64, and RISC-V64. Abstracts CPU init, paging, interrupts, firmware, and KASLR behind unified traits.", status: "stable", loc: "~61K LoC", stats: [{ label: "Architectures", value: "3" }, { label: "LoC", value: "~61K" }], features: ["x86_64 (30K LoC)", "AArch64 (18K LoC)", "RISC-V 64 (13K LoC)", "ACPI/DeviceTree parsing", "KASLR randomization"] } },
+            { id: "limine", label: "limine", x: 190, y: 460, width: 110, height: 36, color: "green",
+              tooltip: "Limine boot protocol adapter",
+              info: { description: "Adapter for the Limine boot protocol. Translates Limine boot info (memory map, framebuffer, kernel address) into unified BootContext.", status: "stable", features: ["Memory map parsing", "Framebuffer setup", "RSDP/ACPI pointer extraction"] } },
+            { id: "multiboot2", label: "multiboot2", x: 355, y: 460, width: 110, height: 36, color: "green",
+              tooltip: "Multiboot2 boot protocol adapter",
+              info: { description: "Multiboot2 specification adapter. Parses Multiboot2 tags for memory, framebuffer, and module information.", status: "stable", features: ["Tag-based info parsing", "Module loading", "GRUB compatibility"] } },
+            { id: "uefi", label: "uefi", x: 520, y: 460, width: 110, height: 36, color: "green",
+              tooltip: "UEFI boot protocol adapter",
+              info: { description: "UEFI boot adapter using UEFI Boot Services and Runtime Services. Handles GOP framebuffer, memory map, and ACPI table discovery.", status: "stable", features: ["UEFI Boot Services", "GOP framebuffer", "Runtime Services bridge"] } },
+            { id: "lumina", label: "Lumina", detail: "197K LoC · 14 crates", x: 80, y: 560, width: 180, height: 44, color: "pink",
+              tooltip: "GPU graphics engine — independent workspace",
+              info: { description: "Lumina is Helix's GPU graphics engine — 14 crates covering shader compilation (GLSL→IR→SPIR-V), render pipeline, material system, and GPU abstraction. Completely independent workspace.", status: "wip", loc: "197K LoC", stats: [{ label: "Crates", value: "14" }, { label: "LoC", value: "197K" }, { label: "Shaders", value: "SPIR-V" }], features: ["Shader compiler (GLSL → IR → SPIR-V)", "Render graph architecture", "PBR material system", "GPU memory suballocator", "Compute pipeline support"] } },
+            { id: "helixfs", label: "HelixFS", detail: "42K LoC · 0 deps", x: 560, y: 560, width: 180, height: 44, color: "orange",
+              tooltip: "Custom filesystem — zero external dependencies",
+              info: { description: "HelixFS is Helix's custom filesystem — 42K lines of pure Rust with zero external dependencies. Features B+Tree indexing, copy-on-write snapshots, and ACID transactions.", status: "wip", loc: "42K LoC", stats: [{ label: "LoC", value: "42K" }, { label: "Deps", value: "0" }, { label: "Index", value: "B+Tree" }], features: ["B+Tree metadata indexing", "Copy-on-write snapshots", "ACID transactions", "Merkle tree integrity", "Extent-based allocation", "ARC caching layer"] } },
           ]}
           edges={[
             { from: "profiles", to: "nexus" },
             { from: "profiles", to: "modules" },
             { from: "profiles", to: "benchmarks" },
-            { from: "nexus", to: "subsystems" },
-            { from: "modules", to: "subsystems" },
+            { from: "nexus", to: "subsystems", label: "ML services" },
+            { from: "modules", to: "subsystems", label: "module API" },
             { from: "benchmarks", to: "subsystems" },
-            { from: "subsystems", to: "core" },
-            { from: "core", to: "hal" },
+            { from: "subsystems", to: "core", label: "TCB calls" },
+            { from: "core", to: "hal", label: "HW traits" },
             { from: "hal", to: "limine" },
             { from: "hal", to: "multiboot2" },
             { from: "hal", to: "uefi" },
           ]}
         />
-        <p className="text-xs text-zinc-500 text-center -mt-4 mb-4 italic">Separate workspaces shown at bottom — Lumina (graphics) and HelixFS are independent crate trees.</p>
+        <p className="text-xs text-zinc-500 text-center -mt-4 mb-4 italic">{d("deps.caption")}</p>
       </Section>
 
       {/* ── METRICS ── */}
       <Section title="Project Metrics" id="metrics">
-        <p>Lines of code measured across all member crates:</p>
+        <p>{d("metrics.intro")}</p>
         <InfoTable
           columns={[
             { header: "Component", key: "component" },
@@ -187,14 +217,14 @@ exclude = ["graphics", "boot/src"]`}</RustCode>
           ]}
         />
         <div className="mt-6 bg-gradient-to-r from-helix-blue/10 to-helix-purple/10 border border-helix-blue/20 rounded-xl p-5">
-          <p className="text-lg font-semibold text-white mb-1">Total: ~1,370,000 lines of Rust across ~3,300 files</p>
-          <p className="text-sm text-zinc-400">Zero external C dependencies. Pure <code className="text-helix-blue">no_std</code> Rust with <code className="text-helix-blue">panic = &quot;abort&quot;</code>. No standard library, no libc, no allocator by default.</p>
+          <p className="text-lg font-semibold text-white mb-1">{d("metrics.total")}</p>
+          <p className="text-sm text-zinc-400">{d("metrics.total.desc")}</p>
         </div>
       </Section>
 
       {/* ── BUILD PROFILES ── */}
       <Section title="Build Profiles" id="profiles">
-        <p>Six Cargo profiles cover every build scenario:</p>
+        <p>{d("profiles.intro")}</p>
         <InfoTable
           columns={[
             { header: "Profile", key: "profile" },
@@ -241,7 +271,7 @@ panic = "unwind"`}</RustCode>
 
       {/* ── TOOLCHAIN ── */}
       <Section title="Toolchain & Targets" id="toolchain">
-        <p>Helix requires Rust nightly for unstable features like <code className="text-helix-blue">abi_x86_interrupt</code>, <code className="text-helix-blue">naked_functions</code>, and <code className="text-helix-blue">alloc_error_handler</code>:</p>
+        <p>{d("toolchain.intro")}</p>
         <RustCode filename="rust-toolchain.toml" language="toml">{`[toolchain]
 channel = "nightly-2025-01-15"
 components = [
@@ -276,7 +306,7 @@ targets = [
 
       {/* ── LINKER ── */}
       <Section title="Linker Scripts" id="linker">
-        <p>Each profile provides a linker script controlling the kernel memory layout. The higher-half kernel maps at <code className="text-helix-blue">0xFFFFFFFF80000000</code> (-2 GiB):</p>
+        <p>{d("linker.intro")}</p>
         <RustCode filename="profiles/common/linker_base.ld" language="ld">{`__KERNEL_VMA_BASE = 0xFFFFFFFF80000000;  /* -2 GiB virtual */
 __KERNEL_LMA_BASE = 0x0000000000200000;  /* 2 MiB physical */
 
@@ -314,7 +344,7 @@ SECTIONS {
 
       {/* ── BOOT SEQUENCE ── */}
       <Section title="Boot Sequence" id="boot">
-        <p>The build pipeline is a 12-step process orchestrated by <code className="text-helix-blue">scripts/build.sh</code> (874 lines). At runtime, the kernel executes an 8-stage hardware initialization:</p>
+        <p>{d("boot.intro")}</p>
         <RustCode filename="boot/src/lib.rs">{`pub enum BootStage {
     PreInit,        // Parse boot info, validate environment
     CpuInit,        // GDT, IDT, enable SSE/AVX/NX
@@ -358,7 +388,7 @@ bitflags! {
     }
 }`}</RustCode>
         <h3 className="text-xl font-semibold text-white mt-10 mb-4">Minimal Profile Entry Point</h3>
-        <p>The <code className="text-helix-blue">profiles/minimal</code> crate demonstrates the full boot-to-demo flow — parsing Multiboot2 info, initializing a 4 MB bump-allocated heap, and launching demo subsystems:</p>
+        <p>{d("boot.minimal.intro")}</p>
         <RustCode filename="profiles/minimal/src/main.rs">{`#[no_mangle]
 pub extern "C" fn kernel_main(multiboot2_info: *const u8) -> ! {
     // 1. Parse Multiboot2 boot information
