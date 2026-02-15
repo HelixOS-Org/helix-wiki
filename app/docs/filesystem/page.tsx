@@ -1,30 +1,25 @@
-import type { Metadata } from "next";
+"use client";
+
 import PageHeader from "@/helix-wiki/components/PageHeader";
 import Section from "@/helix-wiki/components/Section";
 import RustCode from "@/helix-wiki/components/RustCode";
 import InfoTable from "@/helix-wiki/components/InfoTable";
 import Footer from "@/helix-wiki/components/Footer";
-
-export const metadata: Metadata = {
-  title: "HelixFS — Copy-on-Write Filesystem with Journaling, B+Tree & ARC Cache",
-  description: "HelixFS: a modern CoW filesystem built in Rust. Features write-ahead journaling, B+Tree directory indexing, Adaptive Replacement Cache, POSIX file API, and instant snapshots.",
-  alternates: { canonical: "/docs/filesystem" },
-  openGraph: {
-    title: "HelixFS — A Modern Rust Filesystem for Helix OS",
-    description: "On-disk layout, 128-byte inodes, copy-on-write blocks, write-ahead journal with crash recovery, B+Tree O(log n) lookups, ARC cache eviction, and full POSIX API.",
-    url: "https://helix-wiki.com/docs/filesystem",
-  },
-};
+import { useI18n } from "@/helix-wiki/lib/i18n";
+import { getDocString } from "@/helix-wiki/lib/docs-i18n";
+import filesystemContent from "@/helix-wiki/lib/docs-i18n/filesystem";
 import LayerStack from "@/helix-wiki/components/diagrams/LayerStack";
 
 export default function FilesystemPage() {
+  const { locale } = useI18n();
+  const d = (key: string) => getDocString(filesystemContent, locale, key);
   return (
     <div className="min-h-screen bg-black text-white">
-      <PageHeader title="HelixFS" subtitle="42,824 lines across 66 files — a modern copy-on-write filesystem with journaling, B+Tree indexing, ARC caching, snapshots, compression, and encryption. Zero external dependencies." badge="FILESYSTEM" gradient="from-amber-400 to-orange-500" />
+      <PageHeader title={d("header.title")} subtitle={d("header.subtitle")} badge={d("header.badge")} gradient="from-amber-400 to-orange-500" />
 
       {/* ── CONSTANTS ── */}
       <Section title="Constants & Architecture" id="constants">
-        <p>HelixFS is designed from scratch — zero external dependencies, pure <code className="text-helix-blue">no_std</code> Rust. It uses a layered architecture with clear separation:</p>
+        <p>{d("constants.intro")}</p>
         <RustCode filename="fs/src/lib.rs">{`pub const HFS_MAGIC: u32 = 0x48465321;       // "HFS!"
 pub const BLOCK_SIZE: usize = 4096;           // 4 KiB blocks
 pub const MAX_NAME_LEN: usize = 255;          // Max filename length
@@ -41,12 +36,24 @@ pub const ROOT_INO: u64 = 1;                  // Root inode number
 // "full"        — All of the above`}</RustCode>
 
         <LayerStack layers={[
-          { label: "VFS Layer (inode, dentry, namespace, super)", detail: "POSIX API", color: "amber" },
-          { label: "Transaction Layer (atomic operations)", detail: "ACID guarantees", color: "orange" },
-          { label: "Metadata (B+Tree / Radix / Snapshot)", detail: "Indexing", color: "purple" },
-          { label: "Data (Extent / Block / ARC Cache)", detail: "Storage", color: "blue" },
-          { label: "Security (Crypto / Merkle / ACL)", detail: "Protection", color: "cyan" },
-          { label: "Block Device Interface", detail: "Hardware", color: "zinc" },
+          { label: "VFS Layer (inode, dentry, namespace, super)", detail: "POSIX API", color: "amber",
+            description: "POSIX-compatible Virtual File System providing inodes, directory entries, namespaces, and superblock management. Translates standard file operations to HelixFS internals.",
+            info: { components: ["Inode Table", "Dentry Cache", "Namespace Manager", "Superblock"], metrics: [{ label: "API", value: "POSIX", color: "#F59E0B" }, { label: "Ops", value: "15+" }], api: ["open()", "read()", "write()", "stat()", "mkdir()"], status: "active" } },
+          { label: "Transaction Layer (atomic operations)", detail: "ACID guarantees", color: "orange",
+            description: "Write-ahead log and transaction manager ensuring ACID guarantees. Every metadata mutation goes through a transaction that can be committed or rolled back atomically.",
+            info: { components: ["WAL Engine", "Transaction Manager", "Commit Protocol"], metrics: [{ label: "Garantie", value: "ACID", color: "#F97316" }, { label: "WAL", value: "Oui" }], api: ["txn_begin()", "txn_commit()", "txn_abort()"], status: "active" } },
+          { label: "Metadata (B+Tree / Radix / Snapshot)", detail: "Indexing", color: "purple",
+            description: "Multi-index metadata layer using B+Tree for file lookups, radix trees for prefix searches, and snapshot management for copy-on-write versioning.",
+            info: { components: ["B+Tree Index", "Radix Tree", "Snapshot Manager"], metrics: [{ label: "Index", value: "B+Tree", color: "#7B68EE" }, { label: "CoW", value: "Oui" }], api: ["btree_lookup()", "snapshot_create()", "radix_search()"], status: "active" } },
+          { label: "Data (Extent / Block / ARC Cache)", detail: "Storage", color: "blue",
+            description: "Extent-based data allocation with block-level management and ARC (Adaptive Replacement Cache) for intelligent read caching. Minimizes fragmentation through extent coalescing.",
+            info: { components: ["Extent Allocator", "Block Manager", "ARC Cache"], metrics: [{ label: "Alloc", value: "Extent", color: "#4A90E2" }, { label: "Cache", value: "ARC" }], api: ["alloc_extent()", "read_block()", "cache_lookup()"], status: "active" } },
+          { label: "Security (Crypto / Merkle / ACL)", detail: "Protection", color: "cyan",
+            description: "Security layer with per-file AES-256 encryption, Merkle tree integrity verification for tamper detection, and POSIX ACL-based access control lists.",
+            info: { components: ["AES-256 Crypto", "Merkle Verifier", "ACL Engine"], metrics: [{ label: "Chiffrement", value: "AES-256", color: "#22D3EE" }, { label: "Intégrité", value: "Merkle" }], api: ["encrypt_block()", "verify_integrity()", "check_acl()"], status: "active" } },
+          { label: "Block Device Interface", detail: "Hardware", color: "zinc",
+            description: "Low-level block device I/O abstraction layer. Provides sector-aligned read/write operations and DMA buffer management for storage hardware.",
+            info: { components: ["Block I/O", "DMA Buffers", "Device Queue"], metrics: [{ label: "Secteur", value: "512B/4K" }], api: ["block_read()", "block_write()", "flush()"], status: "passive" } },
         ]} />
 
         <h3 className="text-xl font-semibold text-white mt-10 mb-4">Module Map</h3>
@@ -71,7 +78,7 @@ pub const ROOT_INO: u64 = 1;                  // Root inode number
 
       {/* ── ON-DISK LAYOUT ── */}
       <Section title="On-Disk Layout" id="layout">
-        <p>The superblock is the first structure on disk — it identifies the filesystem, tracks state, and stores key parameters:</p>
+        <p>{d("layout.intro")}</p>
         <RustCode filename="fs/src/vfs/superblock.rs">{`pub struct Superblock {
     pub magic: u32,            // 0x48465321 ("HFS!")
     pub version: u32,          // Filesystem format version
@@ -103,7 +110,7 @@ pub enum FsState {
 
       {/* ── INODES ── */}
       <Section title="Inode Structure" id="inodes">
-        <p>Every file and directory is represented by an inode with full POSIX semantics — permissions, timestamps, link count, and extent-based data references:</p>
+        <p>{d("inodes.intro")}</p>
         <RustCode filename="fs/src/vfs/inode.rs">{`pub struct Inode {
     pub ino: u64,              // Unique inode number
     pub mode: u16,             // File type + UNIX permissions
@@ -193,7 +200,7 @@ bitflags! {
 
       {/* ── POSIX ── */}
       <Section title="POSIX File API" id="posix">
-        <p>Full POSIX-compatible file operations — the <code className="text-helix-blue">FileSystem</code> trait covers everything from open/read/write to hardlinks and directory operations:</p>
+        <p>{d("posix.intro")}</p>
         <RustCode filename="fs/src/ops/mod.rs">{`pub trait FileSystem: Send + Sync {
     // ── File operations ──
     fn open(&mut self, path: &str, flags: OpenFlags)
@@ -248,7 +255,7 @@ pub struct FileStat {
 
       {/* ── COW ── */}
       <Section title="Copy-on-Write" id="cow">
-        <p>CoW enables instant snapshots and efficient writes — blocks are never modified in place. A write to a shared block allocates a new block and updates only the pointer:</p>
+        <p>{d("cow.intro")}</p>
         <RustCode filename="fs/src/data/cow.rs">{`pub struct CowManager {
     refcounts: BTreeMap<u64, u32>,   // block → reference count
     pending_copies: Vec<CowCopy>,
@@ -289,7 +296,7 @@ impl CowManager {
 
       {/* ── JOURNAL ── */}
       <Section title="Journal" id="journal">
-        <p>Write-ahead logging for crash consistency. Every metadata modification goes through the journal — if the system crashes, replay recovers to a consistent state:</p>
+        <p>{d("journal.intro")}</p>
         <RustCode filename="fs/src/journal/mod.rs">{`pub struct Journal {
     log: CircularBuffer,    // Ring buffer of journal entries
     head: u64,              // Oldest active transaction
@@ -359,7 +366,7 @@ impl Journal {
 
       {/* ── BTREE ── */}
       <Section title="B+Tree Index" id="btree">
-        <p>Order-128 B+Tree for directory indexing and extent mapping. All data is in leaf nodes; internal nodes contain only keys and child pointers — optimal for disk-based access patterns:</p>
+        <p>{d("btree.intro")}</p>
         <RustCode filename="fs/src/metadata/btree.rs">{`pub struct BPlusTree<K: Ord + Clone, V: Clone> {
     root: Option<Box<Node<K, V>>>,
     order: usize,          // 128 — keys per node
@@ -409,7 +416,7 @@ impl<K: Ord + Clone, V: Clone> BPlusTree<K, V> {
 
       {/* ── ARC ── */}
       <Section title="ARC Cache" id="arc">
-        <p>Adaptive Replacement Cache — a self-tuning cache that outperforms LRU by adapting to both recency and frequency of access. Uses 4 lists to track access patterns:</p>
+        <p>{d("arc.intro")}</p>
         <RustCode filename="fs/src/data/cache.rs">{`pub struct ArcCache<K: Hash + Eq + Clone, V: Clone> {
     // ── Active lists (contain actual data) ──
     t1: LinkedHashMap<K, V>,    // Recent: seen once recently
@@ -453,6 +460,7 @@ impl<K: Hash + Eq + Clone, V: Clone> ArcCache<K, V> {
 
       {/* ── FEATURES ── */}
       <Section title="Feature Summary" id="features">
+        <p>{d("features.intro")}</p>
         <InfoTable
           columns={[
             { header: "Feature", key: "feature" },
