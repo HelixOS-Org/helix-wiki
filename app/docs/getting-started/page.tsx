@@ -4,7 +4,7 @@ import PageHeader from "@/helix-wiki/components/PageHeader";
 import Section from "@/helix-wiki/components/Section";
 import RustCode from "@/helix-wiki/components/RustCode";
 import InfoTable from "@/helix-wiki/components/InfoTable";
-import Footer from "@/helix-wiki/components/Footer";
+import FileTree from "@/helix-wiki/components/diagrams/FileTree";
 import { useI18n } from "@/helix-wiki/lib/i18n";
 import { getDocString } from "@/helix-wiki/lib/docs-i18n";
 import gettingStartedContent from "@/helix-wiki/lib/docs-i18n/getting-started";
@@ -22,7 +22,7 @@ export default function GettingStartedPage() {
       />
 
       {/* ── PREREQUISITES ── */}
-      <Section title="Prerequisites" id="prerequisites">
+      <Section title={d("section.prereq")} id="prerequisites">
         <p>{d("prereq.intro")}</p>
 
         <h3 className="text-xl font-semibold text-white mt-8 mb-4">{d("prereq.hw.title")}</h3>
@@ -71,7 +71,7 @@ xorriso --version 2>&1 | head -1`}</RustCode>
       </Section>
 
       {/* ── INSTALLATION ── */}
-      <Section title="Installation" id="installation">
+      <Section title={d("section.install")} id="installation">
         <h3 className="text-xl font-semibold text-white mb-4">{d("install.rust.title")}</h3>
         <p>{d("install.rust.intro")}</p>
         <RustCode filename="terminal" language="bash">{`# Install Rust
@@ -138,7 +138,7 @@ rustc --version   # should show the pinned nightly`}</RustCode>
       </Section>
 
       {/* ── RUN QEMU ── */}
-      <Section title="QEMU" id="qemu">
+      <Section title={d("section.qemu")} id="qemu">
         <p>{d("qemu.intro")}</p>
         <RustCode filename="terminal" language="bash">{`# Boot with Limine (default)
 ./scripts/run_qemu.sh
@@ -182,7 +182,7 @@ qemu-system-x86_64 \\
       </Section>
 
       {/* ── FIRST MODIFICATION ── */}
-      <Section title="Your First Modification" id="first-mod">
+      <Section title={d("section.firstmod")} id="first-mod">
         <p>{d("firstmod.intro")}</p>
 
         <RustCode filename="core/src/lib.rs">{`// Find the kernel initialization function and add a message:
@@ -209,37 +209,68 @@ pub fn kernel_main() {
       </Section>
 
       {/* ── PROJECT STRUCTURE ── */}
-      <Section title="Project Structure" id="structure">
+      <Section title={d("section.structure")} id="structure">
         <p>{d("structure.intro")}</p>
-        <RustCode filename="helix/" language="text">{`helix/
-├── boot/                     # Boot protocol adapters
-│   ├── limine/               #   Limine protocol (primary)
-│   ├── multiboot2/           #   Multiboot2 (legacy)
-│   └── uefi/                 #   UEFI direct boot
-├── hal/                      # Hardware Abstraction Layer
-│   └── src/arch/             #   x86_64, aarch64, riscv64
-├── core/                     # Trusted Computing Base (~6.4K LoC)
-│   └── src/                  #   Orchestrator, IPC, syscalls, self-heal
-├── subsystems/               # Kernel services
-│   ├── memory/               #   Physical/virtual allocators
-│   ├── execution/            #   Threads, processes, scheduler
-│   ├── dis/                  #   Dynamic Intent Scheduling (~11K LoC)
-│   ├── nexus/                #   AI/ML intelligence (~812K LoC)
-│   ├── init/                 #   Boot initialization (~17K LoC)
-│   ├── userspace/            #   Userspace bridge (~3.4K LoC)
-│   └── relocation/           #   KASLR & ELF relocation
-├── modules/                  # Module system framework
-├── modules_impl/             # Concrete module implementations
-│   └── schedulers/round_robin/
-├── fs/                       # HelixFS filesystem (~42K LoC)
-├── graphics/                 # Lumina GPU stack (~197K LoC)
-├── drivers/                  # Device drivers
-│   └── gpu/magma/            #   Magma GPU driver (~17K LoC)
-├── profiles/                 # OS build profiles
-│   ├── minimal/              #   Minimal kernel profile
-│   └── common/               #   Shared linker scripts
-├── benchmarks/               # Performance benchmarks
-└── scripts/                  # Build & run scripts`}</RustCode>
+        <FileTree title="helix/ — Project Structure" tree={[
+          { name: "helix", icon: "folder",
+            info: { description: "Helix OS monorepo — Cargo workspace containing kernel, subsystems, modules, drivers, filesystem, and graphics stack.", status: "stable" },
+            children: [
+              { name: "boot", icon: "folder", detail: "Boot protocol adapters",
+                info: { description: "Multi-protocol boot support — Limine (primary), Multiboot2 (legacy), and UEFI direct boot adapters.", status: "stable" },
+                children: [
+                  { name: "limine", icon: "folder", detail: "Limine protocol (primary)", info: { description: "Primary boot protocol adapter using the Limine boot protocol.", status: "stable" } },
+                  { name: "multiboot2", icon: "folder", detail: "Multiboot2 (legacy)", info: { description: "Legacy Multiboot2 boot protocol adapter.", status: "stable" } },
+                  { name: "uefi", icon: "folder", detail: "UEFI direct boot", info: { description: "UEFI Boot Services direct boot adapter.", status: "stable" } },
+                ] },
+              { name: "hal", icon: "folder", detail: "Hardware Abstraction Layer",
+                info: { loc: 61000, description: "Multi-architecture HAL — x86_64 (30K), AArch64 (18K), RISC-V 64 (13K). Abstracts CPU, MMU, interrupts, firmware, and KASLR.", status: "stable" },
+                children: [
+                  { name: "src/arch", icon: "folder", detail: "x86_64, aarch64, riscv64", info: { description: "Architecture-specific implementations behind unified HAL traits." } },
+                ] },
+              { name: "core", icon: "folder", detail: "Trusted Computing Base (~6.4K LoC)",
+                info: { loc: 6400, description: "Minimal kernel core — orchestrator, IPC, syscalls, self-heal. Only mechanism, never policy.", status: "stable" },
+                children: [
+                  { name: "src", icon: "folder", detail: "Orchestrator, IPC, syscalls, self-heal", info: { description: "Core kernel source — orchestrator, IPC channels/event bus, syscall dispatch, self-healing manager, and hot-reload." } },
+                ] },
+              { name: "subsystems", icon: "folder", detail: "Kernel services",
+                info: { loc: 200000, description: "Six subsystems providing core OS services: memory, execution, DIS scheduling, NEXUS AI, init, userspace, and relocation.", status: "stable" },
+                children: [
+                  { name: "memory", icon: "folder", detail: "Physical/virtual allocators", info: { description: "Physical frame allocator, virtual memory manager, demand paging, and slab allocator.", status: "stable" } },
+                  { name: "execution", icon: "folder", detail: "Threads, processes, scheduler", info: { description: "Process and thread management, context switching, and scheduling infrastructure.", status: "stable" } },
+                  { name: "dis", icon: "folder", detail: "Dynamic Intent Scheduling (~11K LoC)", info: { loc: 11000, description: "Intent-based CPU scheduler — processes declare scheduling intents instead of priorities.", status: "stable" } },
+                  { name: "nexus", icon: "folder", detail: "AI/ML intelligence (~812K LoC)", info: { loc: 812000, description: "Kernel AI/ML engine — decision trees, neural networks, anomaly detection, all in no_std Rust.", status: "wip" } },
+                  { name: "init", icon: "folder", detail: "Boot initialization (~17K LoC)", info: { loc: 17000, description: "Ordered device initialization with dependency resolution and rollback.", status: "stable" } },
+                  { name: "userspace", icon: "folder", detail: "Userspace bridge (~3.4K LoC)", info: { loc: 3400, description: "Ring-3 transition, user page tables, and initial process setup.", status: "stable" } },
+                  { name: "relocation", icon: "folder", detail: "KASLR & ELF relocation", info: { description: "Kernel Address Space Layout Randomization and ELF binary relocation.", status: "stable" } },
+                ] },
+              { name: "modules", icon: "folder", detail: "Module system framework",
+                info: { loc: 2560, description: "Hot-swappable module framework — ModuleTrait, lifecycle state machine, registry.", status: "stable" } },
+              { name: "modules_impl", icon: "folder", detail: "Concrete module implementations",
+                info: { description: "Concrete implementations of kernel modules — schedulers, drivers, filesystem policies.", status: "stable" },
+                children: [
+                  { name: "schedulers/round_robin", icon: "folder", detail: "Round-robin scheduler module", info: { description: "Reference round-robin scheduler implementation." } },
+                ] },
+              { name: "fs", icon: "folder", detail: "HelixFS filesystem (~42K LoC)",
+                info: { loc: 42000, description: "Custom filesystem — B+Tree indexing, copy-on-write snapshots, ACID transactions, zero external dependencies.", status: "wip" } },
+              { name: "graphics", icon: "folder", detail: "Lumina GPU stack (~197K LoC)",
+                info: { loc: 197000, description: "Complete GPU graphics stack — 14 sub-crates covering math, shaders, rendering, materials, and GPU abstraction.", status: "wip" } },
+              { name: "drivers", icon: "folder", detail: "Device drivers",
+                info: { loc: 17000, description: "Kernel device drivers — currently the Magma GPU driver.", status: "wip" },
+                children: [
+                  { name: "gpu/magma", icon: "folder", detail: "Magma GPU driver (~17K LoC)", info: { loc: 17000, description: "Ring buffer command submission, MMIO register access, and IRQ handling for direct GPU communication.", status: "wip" } },
+                ] },
+              { name: "profiles", icon: "folder", detail: "OS build profiles",
+                info: { description: "Bootable image profiles combining kernel, modules, and configuration into deployable images.", status: "stable" },
+                children: [
+                  { name: "minimal", icon: "folder", detail: "Minimal kernel profile", info: { description: "Stripped-down profile for testing and CI." } },
+                  { name: "common", icon: "folder", detail: "Shared linker scripts", info: { description: "Common linker scripts and build configuration shared across profiles." } },
+                ] },
+              { name: "benchmarks", icon: "folder", detail: "Performance benchmarks",
+                info: { loc: 6300, description: "Kernel benchmark suite — scheduler, memory, IPC, and IRQ benchmarks with statistical analysis.", status: "stable" } },
+              { name: "scripts", icon: "folder", detail: "Build & run scripts",
+                info: { description: "Shell scripts for building, running QEMU, creating ISOs, and running tests." } },
+            ] },
+        ]} />
 
         <div className="bg-gradient-to-r from-helix-blue/10 to-helix-purple/10 border border-helix-blue/20 rounded-xl p-5 mt-6">
           <h4 className="text-white font-semibold mb-2">{d("structure.next.title")}</h4>
@@ -254,7 +285,6 @@ pub fn kernel_main() {
         </div>
       </Section>
 
-      <Footer />
     </div>
   );
 }
