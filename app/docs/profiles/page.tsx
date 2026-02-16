@@ -4,7 +4,6 @@ import PageHeader from "@/helix-wiki/components/PageHeader";
 import Section from "@/helix-wiki/components/Section";
 import RustCode from "@/helix-wiki/components/RustCode";
 import InfoTable from "@/helix-wiki/components/InfoTable";
-import Footer from "@/helix-wiki/components/Footer";
 import { useI18n } from "@/helix-wiki/lib/i18n";
 import { getDocString } from "@/helix-wiki/lib/docs-i18n";
 import profilesContent from "@/helix-wiki/lib/docs-i18n/profiles";
@@ -21,7 +20,7 @@ export default function ProfilesPage() {
       />
 
       {/* ── OVERVIEW ── */}
-      <Section title="How It Works" id="overview">
+      <Section title={d("section.how")} id="overview">
         <p>{d("how.intro")}</p>
         <div className="grid md:grid-cols-4 gap-4 mt-4">
           {[
@@ -40,7 +39,7 @@ export default function ProfilesPage() {
       </Section>
 
       {/* ── AVAILABLE PROFILES ── */}
-      <Section title="Available Profiles" id="profiles">
+      <Section title={d("section.available")} id="profiles">
         <p>{d("available.intro")}</p>
         <InfoTable
           columns={[
@@ -62,7 +61,7 @@ export default function ProfilesPage() {
       </Section>
 
       {/* ── HELIX.TOML ── */}
-      <Section title="Configuration: helix.toml" id="config">
+      <Section title={d("section.config")} id="config">
         <p>{d("config.intro")}</p>
 
         <RustCode filename="profiles/myos/helix.toml" language="toml">{`# ═══════════════════════════════════════════════════════
@@ -158,7 +157,7 @@ serial_console = true     # Enable serial output`}</RustCode>
       </Section>
 
       {/* ── CREATE PROFILE ── */}
-      <Section title="Creating a Profile" id="create">
+      <Section title={d("section.creating")} id="create">
         <p>{d("creating.intro")}</p>
 
         <h3 className="text-xl font-semibold text-white mt-4 mb-4">Step 1: Directory Structure</h3>
@@ -222,7 +221,7 @@ cargo build --release --target x86_64-unknown-none \\
       </Section>
 
       {/* ── MODULE SELECTION ── */}
-      <Section title="Module Selection" id="modules">
+      <Section title={d("section.selection")} id="modules">
         <p>{d("selection.intro")}</p>
 
         <h3 className="text-xl font-semibold text-white mt-8 mb-4">Schedulers</h3>
@@ -276,7 +275,7 @@ cargo build --release --target x86_64-unknown-none \\
       </Section>
 
       {/* ── LINKER SCRIPTS ── */}
-      <Section title="Linker Scripts" id="linker">
+      <Section title={d("section.linker")} id="linker">
         <p>{d("linker.intro")}</p>
         <RustCode filename="profiles/common/linker_base.ld" language="text">{`/* Higher-half kernel mapping */
 KERNEL_OFFSET = 0xFFFF800000000000;
@@ -312,7 +311,6 @@ SECTIONS {
 }`}</RustCode>
       </Section>
 
-      <Footer />
     </div>
   );
 }
