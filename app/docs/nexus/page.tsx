@@ -4,7 +4,6 @@ import PageHeader from "@/helix-wiki/components/PageHeader";
 import Section from "@/helix-wiki/components/Section";
 import RustCode from "@/helix-wiki/components/RustCode";
 import InfoTable from "@/helix-wiki/components/InfoTable";
-import Footer from "@/helix-wiki/components/Footer";
 import { useI18n } from "@/helix-wiki/lib/i18n";
 import { getDocString } from "@/helix-wiki/lib/docs-i18n";
 import nexusContent from "@/helix-wiki/lib/docs-i18n/nexus";
@@ -18,7 +17,7 @@ export default function NexusPage() {
       <PageHeader title={d("header.title")} subtitle={d("header.subtitle")} badge={d("header.badge")} gradient="from-emerald-400 to-cyan-500" />
 
       {/* ── OVERVIEW ── */}
-      <Section title="Architecture Overview" id="overview">
+      <Section title={d("section.overview")} id="overview">
         <p>{d("overview.intro")}</p>
 
         <RustCode filename="subsystems/nexus/src/lib.rs">{`pub struct Nexus {
@@ -81,7 +80,7 @@ impl Nexus {
       </Section>
 
       {/* ── MODULES ── */}
-      <Section title="Module Inventory" id="modules">
+      <Section title={d("section.inventory")} id="modules">
         <p>{d("inventory.intro")}</p>
         <InfoTable
           columns={[
@@ -104,7 +103,7 @@ impl Nexus {
       </Section>
 
       {/* ── ML FRAMEWORK ── */}
-      <Section title="Machine Learning Framework" id="ml">
+      <Section title={d("section.ml")} id="ml">
         <p>{d("ml.intro")}</p>
 
         <h3 className="text-xl font-semibold text-white mt-8 mb-4">{d("ml.tree.title")}</h3>
@@ -227,7 +226,7 @@ pub trait OnlineLearner {
       </Section>
 
       {/* ── CRASH PREDICTION ── */}
-      <Section title="Crash Prediction" id="prediction">
+      <Section title={d("section.crash")} id="prediction">
         <p>{d("crash.intro")}</p>
         <RustCode filename="subsystems/nexus/src/prediction/crash_predictor.rs">{`pub struct CrashPredictor {
     model: RandomForest,           // 100-tree ensemble
@@ -290,7 +289,7 @@ impl CrashPredictor {
       </Section>
 
       {/* ── ANOMALY DETECTION ── */}
-      <Section title="Anomaly Detection" id="anomaly">
+      <Section title={d("section.anomaly")} id="anomaly">
         <p>{d("anomaly.intro")}</p>
         <RustCode filename="subsystems/nexus/src/anomaly/detector.rs">{`pub struct AnomalyDetector {
     baselines: BTreeMap<ComponentId, Baseline>,
@@ -351,7 +350,7 @@ impl AnomalyDetector {
       </Section>
 
       {/* ── QUARANTINE ── */}
-      <Section title="Quarantine System" id="quarantine">
+      <Section title={d("section.quarantine")} id="quarantine">
         <p>{d("quarantine.intro")}</p>
         <RustCode filename="subsystems/nexus/src/quarantine/manager.rs">{`pub struct QuarantineManager {
     quarantined: BTreeMap<ComponentId, QuarantineEntry>,
@@ -407,7 +406,7 @@ impl QuarantineManager {
       </Section>
 
       {/* ── ROADMAP ── */}
-      <Section title="Development Roadmap" id="roadmap">
+      <Section title={d("section.roadmap")} id="roadmap">
         <p>{d("roadmap.intro")}</p>
         <InfoTable
           columns={[
@@ -433,7 +432,7 @@ impl QuarantineManager {
       </Section>
 
       {/* ── SCALE ── */}
-      <Section title="Subsystem Scale" id="scale">
+      <Section title={d("section.scale")} id="scale">
         <p>Breakdown of the NEXUS codebase by functional domain:</p>
         <FileTree title="subsystems/nexus/" tree={[
           { name: "src", icon: "folder", children: [
@@ -516,7 +515,6 @@ impl QuarantineManager {
         ]} />
       </Section>
 
-      <Footer />
     </div>
   );
 }
