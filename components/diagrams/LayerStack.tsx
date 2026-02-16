@@ -77,7 +77,7 @@ export default function LayerStack({ layers, title }: LayerStackProps) {
           <div className="w-1 h-5 rounded-full bg-gradient-to-b from-blue-500 to-purple-500" />
           <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">{title}</p>
           <div className="flex-1 h-px bg-gradient-to-r from-zinc-800 to-transparent" />
-          <span className="text-[10px] font-mono text-zinc-600">{layers.length} couches</span>
+          <span className="text-[10px] font-mono text-zinc-600">{layers.length} layers</span>
         </div>
       )}
 
@@ -195,7 +195,7 @@ export default function LayerStack({ layers, title }: LayerStackProps) {
                         {/* Metrics */}
                         {layer.info.metrics && layer.info.metrics.length > 0 && (
                           <div>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 mb-2">Métriques</p>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 mb-2">Metrics</p>
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                               {layer.info.metrics.map((m, mi) => (
                                 <div key={mi} className="bg-zinc-800/40 rounded-md px-3 py-2 border border-zinc-700/30">
@@ -210,7 +210,7 @@ export default function LayerStack({ layers, title }: LayerStackProps) {
                         {/* Components */}
                         {layer.info.components && layer.info.components.length > 0 && (
                           <div>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 mb-2">Composants</p>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 mb-2">Components</p>
                             <div className="flex flex-wrap gap-1.5">
                               {layer.info.components.map((comp, ci) => (
                                 <span key={ci} className="text-[10px] font-mono px-2 py-1 rounded-md border" style={{ background: c.bg, borderColor: c.border, color: c.text }}>
@@ -224,7 +224,7 @@ export default function LayerStack({ layers, title }: LayerStackProps) {
                         {/* API */}
                         {layer.info.api && layer.info.api.length > 0 && (
                           <div>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 mb-2">API exposée</p>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 mb-2">Exposed API</p>
                             <ul className="space-y-0.5">
                               {layer.info.api.map((a, ai) => (
                                 <li key={ai} className="flex items-center gap-1.5 text-[11px] text-zinc-400 font-mono">
@@ -239,7 +239,7 @@ export default function LayerStack({ layers, title }: LayerStackProps) {
                         {/* Dependencies */}
                         {layer.info.dependencies && layer.info.dependencies.length > 0 && (
                           <div>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 mb-2">Dépendances</p>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 mb-2">Dependencies</p>
                             <div className="flex flex-wrap gap-1">
                               {layer.info.dependencies.map((dep, di) => (
                                 <span key={di} className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-zinc-800/60 text-zinc-500 border border-zinc-700/30">
@@ -261,11 +261,11 @@ export default function LayerStack({ layers, title }: LayerStackProps) {
         {/* Legend */}
         <div className="flex items-center justify-center gap-4 mt-4">
           <div className="flex items-center gap-6 text-[10px] text-zinc-600">
-            <span>↑↓ naviguer</span>
-            <span>Entrée développer</span>
-            <span>Esc fermer</span>
+            <span>↑↓ navigate</span>
+            <span>Enter expand</span>
+            <span>Esc close</span>
             <span className="text-zinc-700">·</span>
-            <span>Cliquer une couche pour voir les détails</span>
+            <span>Click a layer to view details</span>
           </div>
         </div>
       </div>
