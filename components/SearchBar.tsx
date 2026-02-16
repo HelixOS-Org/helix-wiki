@@ -229,57 +229,64 @@ function highlightMatch(text: string, query: string) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
-   COMPONENT
+   COMPONENT — Inline expanding search bar (no popup/modal)
    ═══════════════════════════════════════════════════════════════════════════════ */
-export default function SearchBar() {
-  const [open, setOpen] = useState(false);
+export default function SearchBar({ onFocusChange }: { onFocusChange?: (focused: boolean) => void } = {}) {
+  const [focused, setFocused] = useState(false);
+
+  /* Notify parent when focus changes */
+  useEffect(() => {
+    onFocusChange?.(focused);
+  }, [focused, onFocusChange]);
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { t } = useI18n();
 
-  // Pages only (shown when no query)
-  const pages = useMemo(() => index.filter(e => e.category === "page"), []);
+  /* Intelligent suggestions when no query — most relevant pages */
+  const suggestions = useMemo(() => index.filter(e => e.category === "page"), []);
 
-  // Search results — deep search only when typing
+  /* Search results — deep search when typing */
   const results = useMemo(() => {
-    if (!query.trim()) return pages;
+    if (!query.trim()) return suggestions;
     return index
       .map(entry => ({ entry, score: scoreEntry(query, entry) }))
       .filter(r => r.score > 15)
       .sort((a, b) => b.score - a.score)
-      .slice(0, 20)
+      .slice(0, 12)
       .map(r => r.entry);
-  }, [query, pages]);
+  }, [query, suggestions]);
 
-  // Keyboard shortcut
+  const showDropdown = focused && results.length > 0;
+
+  /* Keyboard shortcut Ctrl/Cmd+K */
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") { e.preventDefault(); setOpen(p => !p); }
-      if (e.key === "Escape") setOpen(false);
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  // Lock body scroll + focus input
+  /* Close dropdown on outside click */
   useEffect(() => {
-    if (open) {
-      document.body.style.overflow = "hidden";
-      // Reset search state when opening
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setQuery("");
-      setSelectedIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
-    } else {
-      document.body.style.overflow = "";
+    if (!focused) return;
+    function handleClick(e: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setFocused(false);
+      }
     }
-    return () => { document.body.style.overflow = ""; };
-  }, [open]);
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [focused]);
 
-  // Scroll selected into view (only when navigating with keyboard)
+  /* Scroll selected into view */
   const isKeyNav = useRef(false);
   useEffect(() => {
     if (!isKeyNav.current) return;
@@ -291,8 +298,8 @@ export default function SearchBar() {
   }, [selectedIndex]);
 
   const navigate = useCallback((href: string, isDeep: boolean) => {
-    setOpen(false);
-    // For deep results (not main pages), append ?highlight=query to highlight text on page
+    setFocused(false);
+    setQuery("");
     if (isDeep && query.trim()) {
       const sep = href.includes("?") ? "&" : "?";
       router.push(`${href}${sep}highlight=${encodeURIComponent(query.trim())}`);
@@ -304,168 +311,136 @@ export default function SearchBar() {
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === "ArrowDown") { e.preventDefault(); isKeyNav.current = true; setSelectedIndex(i => Math.min(i + 1, results.length - 1)); }
     else if (e.key === "ArrowUp") { e.preventDefault(); isKeyNav.current = true; setSelectedIndex(i => Math.max(i - 1, 0)); }
-    else if (e.key === "Enter" && results[selectedIndex]) navigate(results[selectedIndex].href, results[selectedIndex].category !== "page");
+    else if (e.key === "Enter" && results[selectedIndex]) { e.preventDefault(); navigate(results[selectedIndex].href, results[selectedIndex].category !== "page"); }
+    else if (e.key === "Escape") { setFocused(false); inputRef.current?.blur(); }
   }
 
   const [isMac, setIsMac] = useState(false);
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setIsMac(navigator.platform?.toLowerCase().includes("mac")); }, []);
 
   return (
-    <>
-      {/* ── Trigger Button ── */}
-      <button
-        onClick={() => setOpen(true)}
-        className="group relative flex items-center gap-3 h-10 w-full max-w-xs
-                   rounded-xl border border-zinc-700/80 bg-zinc-900/80 backdrop-blur-xl
-                   px-3.5 text-sm text-zinc-400
-                   transition-all duration-200
-                   hover:border-helix-purple/40 hover:bg-zinc-800/90 hover:text-zinc-200
-                   hover:shadow-[0_0_24px_rgba(123,104,238,0.12)]
-                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-helix-purple/60
-                   cursor-pointer"
-      >
-        <svg className="w-4 h-4 shrink-0 text-zinc-400 group-hover:text-helix-blue transition-colors duration-200"
+    <div ref={wrapperRef} className="relative w-full overflow-visible">
+      {/* ── Search Input (always visible, inline) ── */}
+      <div className={`relative flex items-center gap-2.5 w-full
+                        rounded-xl border transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
+                        ${focused
+                          ? "h-12 border-helix-purple/70 bg-zinc-900/95 shadow-[0_0_50px_rgba(123,104,238,0.22),0_0_100px_rgba(123,104,238,0.08),0_0_0_1px_rgba(123,104,238,0.25)] ring-2 ring-helix-purple/25"
+                          : "h-10 border-zinc-700/80 bg-zinc-900/80 hover:border-zinc-600 hover:bg-zinc-800/90"
+                        }
+                        backdrop-blur-xl px-4`}>
+        {/* Search icon */}
+        <svg className={`w-4 h-4 shrink-0 transition-all duration-500 ease-out
+                        ${focused ? "text-helix-purple scale-110 drop-shadow-[0_0_6px_rgba(123,104,238,0.5)]" : "text-zinc-400"}`}
           fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
         </svg>
-        <span className="hidden sm:inline truncate">{t("search.placeholder")}</span>
-        <span className="sm:hidden">{t("search.placeholder")}</span>
-        <kbd className="ml-auto hidden sm:inline-flex items-center gap-0.5
-                        rounded-md border border-zinc-600/80 bg-zinc-800/90
-                        px-1.5 py-0.5 font-mono text-[10px] text-zinc-400
-                        group-hover:border-zinc-500 group-hover:text-zinc-300
-                        transition-all duration-200">
-          {isMac ? "⌘" : "Ctrl"} K
-        </kbd>
-      </button>
 
-      {/* ── Modal ── */}
-      {open && (
-        <div
-          className="fixed inset-0 z-[100] flex items-start justify-center pt-[min(15vh,8rem)]"
-          onClick={() => setOpen(false)}
-          style={{ animation: "searchFadeIn 150ms ease-out" }}
-        >
-          {/* Backdrop — heavy dark overlay with strong blur */}
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-2xl" />
+        {/* Input */}
+        <input
+          ref={inputRef}
+          value={query}
+          onChange={e => { setQuery(e.target.value); setSelectedIndex(0); }}
+          onFocus={() => { setFocused(true); setSelectedIndex(0); }}
+          onKeyDown={handleKeyDown}
+          placeholder={t("search.placeholder")}
+          className={`flex-1 bg-transparent text-white placeholder:text-zinc-500
+                     outline-none caret-helix-purple min-w-0 transition-all duration-300
+                     ${focused ? "text-[15px]" : "text-sm"}`}
+          spellCheck={false}
+          autoComplete="off"
+        />
 
-          {/* Palette */}
-          <div
-            onClick={e => e.stopPropagation()}
-            className="relative w-[95vw] max-w-2xl rounded-2xl overflow-hidden
-                       border border-zinc-700/60
-                       bg-zinc-950 backdrop-blur-3xl
-                       shadow-[0_0_80px_rgba(123,104,238,0.08),0_30px_60px_rgba(0,0,0,0.8)]"
-            style={{ animation: "searchSlideUp 200ms ease-out" }}
-          >
-            {/* Animated border glow */}
-            <div className="pointer-events-none absolute -inset-px rounded-2xl overflow-hidden">
-              <div className="absolute inset-0 rounded-2xl opacity-50"
-                style={{
-                  background: "conic-gradient(from 180deg, transparent 60%, #4A90E220 70%, #7B68EE30 80%, #9B59B620 90%, transparent 100%)",
-                  mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
-                  WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
-                  maskComposite: "exclude",
-                  WebkitMaskComposite: "xor",
-                  padding: "1px",
-                  animation: "searchBorderSpin 4s linear infinite",
-                }} />
-            </div>
+        {/* Clear button */}
+        {query && (
+          <button onClick={() => { setQuery(""); setSelectedIndex(0); inputRef.current?.focus(); }}
+            className="text-zinc-500 hover:text-white transition-colors p-0.5 rounded-md hover:bg-zinc-800 shrink-0">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
 
-            {/* ── Input Row ── */}
-            <div className="flex items-center gap-3 px-5 h-14 border-b border-zinc-800">
-              <svg className="w-5 h-5 shrink-0 text-zinc-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-              </svg>
-              <input
-                ref={inputRef}
-                value={query}
-                onChange={e => { setQuery(e.target.value); setSelectedIndex(0); }}
-                onKeyDown={handleKeyDown}
-                placeholder={t("search.placeholder")}
-                className="flex-1 bg-transparent text-[15px] text-white placeholder:text-zinc-500
-                           outline-none caret-helix-blue"
-                spellCheck={false}
-                autoComplete="off"
-              />
-              {query && (
-                <button onClick={() => { setQuery(""); setSelectedIndex(0); inputRef.current?.focus(); }}
-                  className="text-zinc-500 hover:text-white transition-colors p-1 rounded-md hover:bg-zinc-800">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
-              <button onClick={() => setOpen(false)}
-                className="rounded-md border border-zinc-700 bg-zinc-800/80
-                           px-2 py-0.5 font-mono text-[10px] text-zinc-400
-                           hover:text-white hover:bg-zinc-700 transition-all cursor-pointer">
-                ESC
-              </button>
-            </div>
+        {/* Shortcut hint */}
+        {!focused && !query && (
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 shrink-0
+                          rounded-md border border-zinc-600/80 bg-zinc-800/90
+                          px-1.5 py-0.5 font-mono text-[10px] text-zinc-500">
+            {isMac ? "⌘" : "Ctrl"} K
+          </kbd>
+        )}
 
-            {/* ── Results ── */}
-            <div ref={listRef} className="max-h-[min(55vh,26rem)] overflow-y-auto overscroll-contain py-2 px-2">
-              {query.trim() && results.length === 0 ? (
-                <div className="py-14 text-center">
-                  <div className="text-3xl mb-3">🔍</div>
-                  <p className="text-sm text-zinc-300">
-                    No results for &ldquo;<span className="text-white font-semibold">{query}</span>&rdquo;
-                  </p>
-                  <p className="text-xs text-zinc-500 mt-1.5">Try different keywords</p>
-                </div>
-              ) : (
-                <>
-                  {query.trim() && (
-                    <div className="px-3 py-1.5">
-                      <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
-                        {results.length} result{results.length > 1 ? "s" : ""}
-                      </span>
-                    </div>
-                  )}
-                  {!query.trim() && (
-                    <div className="px-3 py-1.5">
-                      <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
-                        Quick links
-                      </span>
-                    </div>
-                  )}
-                  {results.map((item, i) => (
-                    <ResultItem key={item.href + item.title} item={item} index={i}
-                      selected={i === selectedIndex} query={query}
-                      onNavigate={navigate} onHover={setSelectedIndex} />
-                  ))}    
-                </>
-              )}
-            </div>
+        {/* Live result count when typing */}
+        {focused && query.trim() && (
+          <span className="text-[10px] text-zinc-500 shrink-0 tabular-nums">
+            {results.length}
+          </span>
+        )}
+      </div>
 
-            {/* ── Footer ── */}
-            <div className="flex items-center gap-5 px-5 h-10 border-t border-zinc-800 text-[11px] text-zinc-500">
-              <span className="flex items-center gap-1">
-                <kbd className="inline-flex items-center justify-center w-5 h-5 rounded border border-zinc-700 bg-zinc-800/80 text-[10px] text-zinc-400">↑</kbd>
-                <kbd className="inline-flex items-center justify-center w-5 h-5 rounded border border-zinc-700 bg-zinc-800/80 text-[10px] text-zinc-400">↓</kbd>
-                Navigate
-              </span>
-              <span className="flex items-center gap-1">
-                <kbd className="inline-flex items-center justify-center w-5 h-5 rounded border border-zinc-700 bg-zinc-800/80 text-[10px] text-zinc-400">↵</kbd>
-                Open
-              </span>
-              <span className="flex items-center gap-1">
-                <kbd className="inline-flex items-center justify-center px-1.5 h-5 rounded border border-zinc-700 bg-zinc-800/80 text-[10px] text-zinc-400">Esc</kbd>
-                Close
-              </span>
-              <span className="ml-auto text-zinc-600 hidden sm:inline">
-                Deep search across all docs
-              </span>
-            </div>
+      {/* ── Inline dropdown (NOT a modal — appears directly below the input) ── */}
+      <div
+        className={`absolute top-full left-0 right-0 mt-2 z-[100]
+                     transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] origin-top
+                     ${showDropdown
+                       ? "opacity-100 scale-100 translate-y-0 visible"
+                       : "opacity-0 scale-[0.96] -translate-y-2 invisible pointer-events-none"
+                     }`}
+      >
+        <div className="rounded-2xl border border-helix-purple/20 bg-zinc-950/[0.98] backdrop-blur-2xl
+                        shadow-[0_25px_80px_rgba(0,0,0,0.8),0_0_50px_rgba(123,104,238,0.1),0_0_0_1px_rgba(123,104,238,0.08)]
+                        overflow-hidden">
+
+          {/* Category label */}
+          <div className="px-4 pt-3 pb-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
+              {query.trim()
+                ? `${results.length} result${results.length !== 1 ? "s" : ""}`
+                : "Quick links"
+              }
+            </span>
+          </div>
+
+          {/* Results list */}
+          <div ref={listRef} className="max-h-[min(50vh,22rem)] overflow-y-auto overscroll-contain px-1.5 pb-1.5">
+            {query.trim() && results.length === 0 ? (
+              <div className="py-10 text-center">
+                <div className="text-2xl mb-2">🔍</div>
+                <p className="text-sm text-zinc-300">
+                  No results for &ldquo;<span className="text-white font-semibold">{query}</span>&rdquo;
+                </p>
+                <p className="text-xs text-zinc-500 mt-1">Try different keywords</p>
+              </div>
+            ) : (
+              results.map((item, i) => (
+                <ResultItem key={item.href + item.title} item={item} index={i}
+                  selected={i === selectedIndex} query={query}
+                  onNavigate={navigate} onHover={setSelectedIndex} />
+              ))
+            )}
+          </div>
+
+          {/* Footer hints */}
+          <div className="flex items-center gap-4 px-4 h-9 border-t border-zinc-800/60 text-[10px] text-zinc-500">
+            <span className="flex items-center gap-1">
+              <kbd className="inline-flex items-center justify-center w-4 h-4 rounded border border-zinc-700 bg-zinc-800/80 text-[9px] text-zinc-400">↑</kbd>
+              <kbd className="inline-flex items-center justify-center w-4 h-4 rounded border border-zinc-700 bg-zinc-800/80 text-[9px] text-zinc-400">↓</kbd>
+              Navigate
+            </span>
+            <span className="flex items-center gap-1">
+              <kbd className="inline-flex items-center justify-center w-4 h-4 rounded border border-zinc-700 bg-zinc-800/80 text-[9px] text-zinc-400">↵</kbd>
+              Open
+            </span>
+            <span className="flex items-center gap-1">
+              <kbd className="inline-flex items-center justify-center px-1 h-4 rounded border border-zinc-700 bg-zinc-800/80 text-[9px] text-zinc-400">Esc</kbd>
+              Close
+            </span>
+            <span className="ml-auto text-zinc-600 hidden sm:inline">
+              Deep search across all docs
+            </span>
           </div>
         </div>
-      )}
-
-      {/* Animations — injected once */}
-      <SearchAnimations />
-    </>
+      </div>
+    </div>
   );
 }
 
@@ -531,29 +506,4 @@ function ResultItem({ item, index, selected, query, onNavigate, onHover }: {
   );
 }
 
-/* ── Animation Styles (injected via useEffect to avoid jsx global) ── */
-function SearchAnimations() {
-  useEffect(() => {
-    const id = "helix-search-animations";
-    if (document.getElementById(id)) return;
-    const style = document.createElement("style");
-    style.id = id;
-    style.textContent = `
-      @keyframes searchFadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-      }
-      @keyframes searchSlideUp {
-        from { opacity: 0; transform: translateY(12px) scale(0.98); }
-        to { opacity: 1; transform: translateY(0) scale(1); }
-      }
-      @keyframes searchBorderSpin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-      }
-    `;
-    document.head.appendChild(style);
-    return () => { style.remove(); };
-  }, []);
-  return null;
-}
+/* ── No extra animation styles needed — all handled by Tailwind transitions ── */
