@@ -35,8 +35,8 @@ const langColors: Record<string, { color: string; bg: string; icon: string }> = 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   stable:     { label: "Stable",     color: "#22C55E", bg: "rgba(34,197,94,0.15)" },
   wip:        { label: "WIP",        color: "#F59E0B", bg: "rgba(245,158,11,0.15)" },
-  new:        { label: "Nouveau",    color: "#4A90E2", bg: "rgba(74,144,226,0.15)" },
-  deprecated: { label: "Obsolète",   color: "#EF4444", bg: "rgba(239,68,68,0.15)" },
+  new:        { label: "New",        color: "#4A90E2", bg: "rgba(74,144,226,0.15)" },
+  deprecated: { label: "Deprecated", color: "#EF4444", bg: "rgba(239,68,68,0.15)" },
 };
 
 function countItems(node: TreeNode): number {
@@ -256,7 +256,7 @@ export default function FileTree({ tree, title }: FileTreeProps) {
   }, []);
 
   return (
-    <div className="my-8 flex gap-3">
+    <div className="my-8 flex flex-col lg:flex-row gap-3">
       <div className="flex-1 bg-zinc-900/50 border border-zinc-800/60 rounded-xl p-5 overflow-x-auto">
         {/* Header */}
         <div className="flex items-center gap-2 mb-3 pb-3 border-b border-zinc-800/60">
@@ -267,7 +267,7 @@ export default function FileTree({ tree, title }: FileTreeProps) {
           </div>
           {title && <span className="text-xs font-mono text-zinc-500 ml-2">{title}</span>}
           <div className="flex items-center gap-2 ml-auto">
-            <span className="text-[10px] font-mono text-zinc-600">{totalFiles} fichiers</span>
+            <span className="text-[10px] font-mono text-zinc-600">{totalFiles} files</span>
             {totalLoc > 0 && (
               <>
                 <span className="text-zinc-700">·</span>
@@ -284,11 +284,11 @@ export default function FileTree({ tree, title }: FileTreeProps) {
               <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5"/>
               <line x1="10.5" y1="10.5" x2="14" y2="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
-            <input type="text" placeholder="Filtrer les fichiers..." value={filter} onChange={e => setFilter(e.target.value.toLowerCase())}
+            <input type="text" placeholder="Filter files..." value={filter} onChange={e => setFilter(e.target.value.toLowerCase())}
               className="w-full bg-zinc-800/50 border border-zinc-700/50 rounded-md text-xs text-zinc-300 pl-8 pr-3 py-1.5 placeholder:text-zinc-600 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-colors" />
           </div>
-          <button onClick={collapseAll} className="text-[10px] text-zinc-500 hover:text-zinc-300 px-2 py-1 rounded border border-zinc-700/40 hover:border-zinc-600/60 transition-colors cursor-pointer">Réduire</button>
-          <button onClick={expandAll} className="text-[10px] text-zinc-500 hover:text-zinc-300 px-2 py-1 rounded border border-zinc-700/40 hover:border-zinc-600/60 transition-colors cursor-pointer">Déplier</button>
+          <button onClick={collapseAll} className="text-[10px] text-zinc-500 hover:text-zinc-300 px-2 py-1 rounded border border-zinc-700/40 hover:border-zinc-600/60 transition-colors cursor-pointer">Collapse</button>
+          <button onClick={expandAll} className="text-[10px] text-zinc-500 hover:text-zinc-300 px-2 py-1 rounded border border-zinc-700/40 hover:border-zinc-600/60 transition-colors cursor-pointer">Expand</button>
         </div>
 
         {/* Tree */}
@@ -301,7 +301,7 @@ export default function FileTree({ tree, title }: FileTreeProps) {
 
       {/* Detail panel */}
       {selectedNode?.info && (
-        <div className="w-64 shrink-0 bg-zinc-900/50 border border-zinc-800/60 rounded-xl p-4 self-start max-h-[500px] overflow-y-auto">
+        <div className="w-full lg:w-64 shrink-0 bg-zinc-900/50 border border-zinc-800/60 rounded-xl p-4 self-start max-h-[500px] overflow-y-auto">
           {/* Breadcrumb */}
           <div className="flex items-center gap-1 mb-3 flex-wrap">
             {breadcrumb.map((seg, i) => (
