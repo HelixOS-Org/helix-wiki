@@ -1,0 +1,186 @@
+import type { DocContent } from "./index";
+
+const content: DocContent = {
+  en: {
+    badge: "Interactive Boot Sequence",
+    title: "Watch Helix Boot",
+    subtitle: "Experience the complete 5-phase boot sequence of Helix OS — from firmware POST to user-space init.",
+    back_home: "Back to Home",
+  },
+  fr: {
+    badge: "Séquence de démarrage interactive",
+    title: "Regardez Helix démarrer",
+    subtitle: "Découvrez la séquence de démarrage complète en 5 phases de Helix OS — du POST du firmware à l'init de l'espace utilisateur.",
+    back_home: "Retour à l'accueil",
+  },
+  es: {
+    badge: "Secuencia de arranque interactiva",
+    title: "Observa el arranque de Helix",
+    subtitle: "Experimenta la secuencia de arranque completa de 5 fases de Helix OS — desde el POST del firmware hasta el init del espacio de usuario.",
+    back_home: "Volver al inicio",
+  },
+  de: {
+    badge: "Interaktive Boot-Sequenz",
+    title: "Helix Boot beobachten",
+    subtitle: "Erleben Sie die vollständige 5-Phasen-Boot-Sequenz von Helix OS — vom Firmware-POST bis zum User-Space-Init.",
+    back_home: "Zurück zur Startseite",
+  },
+  pt: {
+    badge: "Sequência de boot interativa",
+    title: "Assista ao boot do Helix",
+    subtitle: "Experimente a sequência completa de boot em 5 fases do Helix OS — do POST do firmware ao init do espaço do usuário.",
+    back_home: "Voltar ao início",
+  },
+  ru: {
+    badge: "Интерактивная последовательность загрузки",
+    title: "Наблюдайте загрузку Helix",
+    subtitle: "Полная 5-фазная последовательность загрузки Helix OS — от POST прошивки до инициализации пользовательского пространства.",
+    back_home: "На главную",
+  },
+  ar: {
+    badge: "تسلسل التمهيد التفاعلي",
+    title: "شاهد تمهيد Helix",
+    subtitle: "استمتع بتسلسل التمهيد الكامل المكون من 5 مراحل لـ Helix OS — من اختبار التشغيل الذاتي للبرنامج الثابت إلى تهيئة مساحة المستخدم.",
+    back_home: "العودة إلى الرئيسية",
+  },
+  zh: {
+    badge: "Interactive Boot Sequence",
+    title: "Watch Helix Boot",
+    subtitle: "Experience the complete 5-phase boot sequence of Helix OS — from firmware POST to user-space init.",
+    back_home: "Back to Home",
+  },
+  ja: {
+    badge: "Interactive Boot Sequence",
+    title: "Watch Helix Boot",
+    subtitle: "Experience the complete 5-phase boot sequence of Helix OS — from firmware POST to user-space init.",
+    back_home: "Back to Home",
+  },
+  ko: {
+    badge: "Interactive Boot Sequence",
+    title: "Watch Helix Boot",
+    subtitle: "Experience the complete 5-phase boot sequence of Helix OS — from firmware POST to user-space init.",
+    back_home: "Back to Home",
+  },
+  hi: {
+    badge: "Interactive Boot Sequence",
+    title: "Watch Helix Boot",
+    subtitle: "Experience the complete 5-phase boot sequence of Helix OS — from firmware POST to user-space init.",
+    back_home: "Back to Home",
+  },
+  it: {
+    badge: "Interactive Boot Sequence",
+    title: "Watch Helix Boot",
+    subtitle: "Experience the complete 5-phase boot sequence of Helix OS — from firmware POST to user-space init.",
+    back_home: "Back to Home",
+  },
+  nl: {
+    badge: "Interactive Boot Sequence",
+    title: "Watch Helix Boot",
+    subtitle: "Experience the complete 5-phase boot sequence of Helix OS — from firmware POST to user-space init.",
+    back_home: "Back to Home",
+  },
+  pl: {
+    badge: "Interactive Boot Sequence",
+    title: "Watch Helix Boot",
+    subtitle: "Experience the complete 5-phase boot sequence of Helix OS — from firmware POST to user-space init.",
+    back_home: "Back to Home",
+  },
+  sv: {
+    badge: "Interactive Boot Sequence",
+    title: "Watch Helix Boot",
+    subtitle: "Experience the complete 5-phase boot sequence of Helix OS — from firmware POST to user-space init.",
+    back_home: "Back to Home",
+  },
+  tr: {
+    badge: "Interactive Boot Sequence",
+    title: "Watch Helix Boot",
+    subtitle: "Experience the complete 5-phase boot sequence of Helix OS — from firmware POST to user-space init.",
+    back_home: "Back to Home",
+  },
+  uk: {
+    badge: "Interactive Boot Sequence",
+    title: "Watch Helix Boot",
+    subtitle: "Experience the complete 5-phase boot sequence of Helix OS — from firmware POST to user-space init.",
+    back_home: "Back to Home",
+  },
+  th: {
+    badge: "Interactive Boot Sequence",
+    title: "Watch Helix Boot",
+    subtitle: "Experience the complete 5-phase boot sequence of Helix OS — from firmware POST to user-space init.",
+    back_home: "Back to Home",
+  },
+  vi: {
+    badge: "Interactive Boot Sequence",
+    title: "Watch Helix Boot",
+    subtitle: "Experience the complete 5-phase boot sequence of Helix OS — from firmware POST to user-space init.",
+    back_home: "Back to Home",
+  },
+  id: {
+    badge: "Interactive Boot Sequence",
+    title: "Watch Helix Boot",
+    subtitle: "Experience the complete 5-phase boot sequence of Helix OS — from firmware POST to user-space init.",
+    back_home: "Back to Home",
+  },
+  cs: {
+    badge: "Interactive Boot Sequence",
+    title: "Watch Helix Boot",
+    subtitle: "Experience the complete 5-phase boot sequence of Helix OS — from firmware POST to user-space init.",
+    back_home: "Back to Home",
+  },
+  ro: {
+    badge: "Interactive Boot Sequence",
+    title: "Watch Helix Boot",
+    subtitle: "Experience the complete 5-phase boot sequence of Helix OS — from firmware POST to user-space init.",
+    back_home: "Back to Home",
+  },
+  hu: {
+    badge: "Interactive Boot Sequence",
+    title: "Watch Helix Boot",
+    subtitle: "Experience the complete 5-phase boot sequence of Helix OS — from firmware POST to user-space init.",
+    back_home: "Back to Home",
+  },
+  el: {
+    badge: "Interactive Boot Sequence",
+    title: "Watch Helix Boot",
+    subtitle: "Experience the complete 5-phase boot sequence of Helix OS — from firmware POST to user-space init.",
+    back_home: "Back to Home",
+  },
+  he: {
+    badge: "Interactive Boot Sequence",
+    title: "Watch Helix Boot",
+    subtitle: "Experience the complete 5-phase boot sequence of Helix OS — from firmware POST to user-space init.",
+    back_home: "Back to Home",
+  },
+  bn: {
+    badge: "Interactive Boot Sequence",
+    title: "Watch Helix Boot",
+    subtitle: "Experience the complete 5-phase boot sequence of Helix OS — from firmware POST to user-space init.",
+    back_home: "Back to Home",
+  },
+  ms: {
+    badge: "Interactive Boot Sequence",
+    title: "Watch Helix Boot",
+    subtitle: "Experience the complete 5-phase boot sequence of Helix OS — from firmware POST to user-space init.",
+    back_home: "Back to Home",
+  },
+  fi: {
+    badge: "Interactive Boot Sequence",
+    title: "Watch Helix Boot",
+    subtitle: "Experience the complete 5-phase boot sequence of Helix OS — from firmware POST to user-space init.",
+    back_home: "Back to Home",
+  },
+  da: {
+    badge: "Interactive Boot Sequence",
+    title: "Watch Helix Boot",
+    subtitle: "Experience the complete 5-phase boot sequence of Helix OS — from firmware POST to user-space init.",
+    back_home: "Back to Home",
+  },
+  no: {
+    badge: "Interactive Boot Sequence",
+    title: "Watch Helix Boot",
+    subtitle: "Experience the complete 5-phase boot sequence of Helix OS — from firmware POST to user-space init.",
+    back_home: "Back to Home",
+  },
+};
+
+export default content;
