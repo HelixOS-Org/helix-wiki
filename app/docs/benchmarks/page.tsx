@@ -4,7 +4,7 @@ import PageHeader from "@/helix-wiki/components/PageHeader";
 import Section from "@/helix-wiki/components/Section";
 import RustCode from "@/helix-wiki/components/RustCode";
 import InfoTable from "@/helix-wiki/components/InfoTable";
-import Footer from "@/helix-wiki/components/Footer";
+import FlowDiagram from "@/helix-wiki/components/diagrams/FlowDiagram";
 import { useI18n } from "@/helix-wiki/lib/i18n";
 import { getDocString } from "@/helix-wiki/lib/docs-i18n";
 import benchmarksContent from "@/helix-wiki/lib/docs-i18n/benchmarks";
@@ -21,35 +21,32 @@ export default function BenchmarksPage() {
       />
 
       {/* ── ARCHITECTURE ── */}
-      <Section title="Suite Architecture" id="architecture">
+      <Section title={d("section.suite")} id="architecture">
         <p>{d("suite.intro")}</p>
-        <RustCode filename="Benchmark Suite Architecture" language="text">{`┌─────────────────────────────────────────────────────────────────────────┐
-│                      HELIX BENCHMARK SUITE                              │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌───────────┐  │
-│  │  SCHEDULER   │  │   MEMORY     │  │     IPC      │  │   IRQ     │  │
-│  │  BENCHMARKS  │  │  BENCHMARKS  │  │  BENCHMARKS  │  │ BENCHMARKS│  │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  └─────┬─────┘  │
-│         │                 │                 │                │         │
-│         └────────────┬────┴─────────────────┴────────────────┘         │
-│                      │                                                  │
-│              ┌───────▼───────┐                                         │
-│              │  BENCHMARK    │  Warmup · Iteration · Outlier detection │
-│              │    ENGINE     │                                         │
-│              └───────┬───────┘                                         │
-│                      │                                                  │
-│              ┌───────▼───────┐                                         │
-│              │   RESULTS     │  min / max / mean / p50 / p95 / p99    │
-│              │   COLLECTOR   │  std_dev · outlier count · status      │
-│              └───────┬───────┘                                         │
-│                      │                                                  │
-│              ┌───────▼───────┐                                         │
-│              │    REPORT     │  Per-category tables · Comparisons     │
-│              │   GENERATOR   │  Platform info · Summary               │
-│              └───────────────┘                                         │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘`}</RustCode>
+        <FlowDiagram
+          title="Benchmark Suite Architecture"
+          phases={[
+            { title: "Benchmarks", color: "blue", description: "Individual benchmark modules that register test cases for each kernel subsystem.", nodes: [
+              { label: "Scheduler", color: "blue", info: { description: "Context switch, thread lifecycle, and DIS intent benchmarks. 15 registered tests.", priority: "high", outputs: ["RunResult[]"], dependencies: [] } },
+              { label: "Memory", color: "blue", info: { description: "Allocation, page ops, TLB flush, and access pattern benchmarks. 22 registered tests.", priority: "high", outputs: ["RunResult[]"] } },
+              { label: "IPC", color: "blue", info: { description: "Channel send/recv, event publish, and message routing round-trip latency.", priority: "normal", outputs: ["RunResult[]"] } },
+              { label: "IRQ", color: "blue", info: { description: "Interrupt entry, dispatch, and handler latency measurements.", priority: "normal", outputs: ["RunResult[]"] } },
+            ]},
+            { title: "Engine", color: "purple", description: "Core benchmark execution loop — manages warmup iterations, main measurement, and outlier detection.", nodes: [
+              { label: "Warmup", color: "purple", info: { description: "CPU cache priming phase. Default: 1,000 iterations. Ensures stable measurements.", duration: "Variable", priority: "high" } },
+              { label: "Iteration", color: "purple", info: { description: "Main measurement loop. Default: 10,000 iterations with RDTSC cycle counting.", duration: "~10K cycles × N", priority: "critical" } },
+              { label: "Outlier Filter", color: "purple", info: { description: "Median Absolute Deviation (MAD) based outlier removal. 3σ threshold.", priority: "normal" } },
+            ]},
+            { title: "Collection", color: "cyan", description: "Statistical analysis engine computing percentiles, standard deviation, and status classification.", nodes: [
+              { label: "Stats", color: "cyan", info: { description: "Computes min / max / mean / p50 / p95 / p99 / std_dev from filtered data.", priority: "normal", outputs: ["BenchmarkStats"] } },
+              { label: "Classify", color: "cyan", info: { description: "Classifies each benchmark as PASS / WARN / FAIL based on threshold config.", priority: "normal", outputs: ["BenchmarkStatus"] } },
+            ]},
+            { title: "Report", color: "green", description: "Final report generation with per-category tables, platform info, and comparison data.", nodes: [
+              { label: "Format", color: "green", info: { description: "Generates per-category tables with aligned columns, comparisons, and summary.", priority: "normal", outputs: ["BenchmarkReport"] } },
+              { label: "Output", color: "green", info: { description: "Renders report to serial console and optional log file.", priority: "low", outputs: ["Serial output", "Log file"] } },
+            ]},
+          ]}
+        />
 
         <h3 className="text-xl font-semibold text-white mt-8 mb-4">Modules</h3>
         <InfoTable
@@ -72,7 +69,7 @@ export default function BenchmarksPage() {
       </Section>
 
       {/* ── CONFIGURATION ── */}
-      <Section title="Configuration" id="config">
+      <Section title={d("section.config")} id="config">
         <p>{d("config.intro")}</p>
         <RustCode filename="benchmarks/src/engine.rs">{`use helix_benchmarks::{BenchmarkSuite, BenchmarkConfig};
 
@@ -103,7 +100,7 @@ results.print_report();`}</RustCode>
       </Section>
 
       {/* ── SCHEDULER BENCHMARKS ── */}
-      <Section title="Scheduler Benchmarks" id="scheduler">
+      <Section title={d("section.scheduler")} id="scheduler">
         <p>{d("scheduler.intro")}</p>
 
         <InfoTable
@@ -154,7 +151,7 @@ fn bench_full_context_switch() -> u64 {
       </Section>
 
       {/* ── MEMORY BENCHMARKS ── */}
-      <Section title="Memory Benchmarks" id="memory">
+      <Section title={d("section.memory")} id="memory">
         <p>{d("memory.intro")}</p>
 
         <InfoTable
@@ -175,7 +172,7 @@ fn bench_full_context_switch() -> u64 {
       </Section>
 
       {/* ── STATISTICAL ENGINE ── */}
-      <Section title="Statistical Analysis" id="statistics">
+      <Section title={d("section.stats")} id="statistics">
         <p>{d("stats.intro")}</p>
 
         <RustCode filename="benchmarks/src/results.rs">{`pub struct CycleStats {
@@ -225,7 +222,7 @@ pub struct TimeStats {
       </Section>
 
       {/* ── RUNNING ── */}
-      <Section title="Running Benchmarks" id="running">
+      <Section title={d("section.running")} id="running">
         <p>{d("running.intro")}</p>
         <RustCode filename="Terminal" language="bash">{`# Build with benchmark support
 cargo build --release -p helix-benchmarks
@@ -265,7 +262,6 @@ cargo build --release -p helix-benchmarks --features "stress"`}</RustCode>
 ╚═══════════════════════════════════════════════════════════════╝`}</RustCode>
       </Section>
 
-      <Footer />
     </div>
   );
 }
