@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/helix-wiki/components/Navbar";
+import Footer from "@/helix-wiki/components/Footer";
 import { I18nProvider } from "@/helix-wiki/lib/i18n";
 
 const geistSans = Geist({
@@ -169,8 +170,11 @@ export default function RootLayout({
       >
         <I18nProvider>
           <Navbar />
-          <div id="main-content">
+          <div id="main-content" className="relative z-20">
             {children}
+          </div>
+          <div className="relative z-10">
+            <Footer />
           </div>
         </I18nProvider>
       </body>
