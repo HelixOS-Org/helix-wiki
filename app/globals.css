@@ -129,3 +129,33 @@ body {
 .sidebar-enter {
   animation: sidebar-enter 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* ── Reduced Motion: respect user preferences ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-float,
+  .animate-pulse-slow,
+  .animate-pulse,
+  .animate-in {
+    animation: none !important;
+  }
+  canvas {
+    display: none !important;
+  }
+}
+
+/* ── Mobile: reduce heavy effects ── */
+@media (max-width: 768px) {
+  .animate-float {
+    animation: none;
+  }
+  .animate-pulse-slow {
+    animation: none;
+    opacity: 0.7;
+  }
+}
