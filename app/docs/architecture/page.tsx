@@ -4,7 +4,6 @@ import PageHeader from "@/helix-wiki/components/PageHeader";
 import Section from "@/helix-wiki/components/Section";
 import RustCode from "@/helix-wiki/components/RustCode";
 import InfoTable from "@/helix-wiki/components/InfoTable";
-import Footer from "@/helix-wiki/components/Footer";
 import LayerStack from "@/helix-wiki/components/diagrams/LayerStack";
 import DependencyGraph from "@/helix-wiki/components/diagrams/DependencyGraph";
 import { useI18n } from "@/helix-wiki/lib/i18n";
@@ -23,24 +22,24 @@ export default function ArchitecturePage() {
       />
 
       {/* ── LAYER STACK ── */}
-      <Section title="Layer Stack" id="layers">
+      <Section title={d("section.layers")} id="layers">
         <p>{d("layers.intro")}</p>
         <LayerStack layers={[
           { label: "Modules (Schedulers, Drivers, Filesystems, Security)", detail: "Policy layer", color: "purple",
             description: "Hot-swappable policy modules implementing scheduling, filesystem, security, and driver logic. All replaceable at runtime via trait-based interfaces.",
-            info: { components: ["CFS Scheduler", "EDF Scheduler", "VFS Driver", "Firewall Module", "GPU Driver"], metrics: [{ label: "Modules", value: "12+", color: "#7B68EE" }, { label: "Hot-Swap", value: "Oui", color: "#22C55E" }], api: ["ModuleTrait::init()", "ModuleTrait::cleanup()", "register_module()"], status: "active" } },
+            info: { components: ["CFS Scheduler", "EDF Scheduler", "VFS Driver", "Firewall Module", "GPU Driver"], metrics: [{ label: "Modules", value: "12+", color: "#7B68EE" }, { label: "Hot-Swap", value: "Yes", color: "#22C55E" }], api: ["ModuleTrait::init()", "ModuleTrait::cleanup()", "register_module()"], status: "active" } },
           { label: "Subsystems (Memory, Execution, DIS, Init, NEXUS)", detail: "Services", color: "blue",
             description: "Core services bridging hardware abstraction with module policies. Manages memory allocation, process execution, device initialization, and AI-driven optimization.",
             info: { components: ["Memory Manager", "Execution Engine", "DIS (Device Init)", "Init Framework", "NEXUS AI"], metrics: [{ label: "LoC", value: "~200K" }, { label: "Subsystems", value: "6", color: "#4A90E2" }], api: ["alloc_pages()", "spawn_process()", "nexus_predict()"], dependencies: ["core", "hal"], status: "active" } },
           { label: "Core Kernel (Orchestrator, IPC, Syscall, Self-Heal)", detail: "TCB · 6.4K LoC", color: "cyan",
             description: "Minimal Trusted Computing Base — only mechanism, never policy. Provides IPC channels, syscall dispatch, event routing, and self-healing coordination. Entire TCB fits in ~6,400 lines.",
-            info: { components: ["Orchestrator", "IPC Engine", "Syscall Table", "Self-Heal Monitor", "Event Router"], metrics: [{ label: "LoC", value: "6,400", color: "#22D3EE" }, { label: "Fichiers", value: "25" }, { label: "Sécurité", value: "TCB", color: "#EF4444" }], api: ["ipc_send()", "ipc_recv()", "syscall_dispatch()", "self_heal()"], status: "critical" } },
+            info: { components: ["Orchestrator", "IPC Engine", "Syscall Table", "Self-Heal Monitor", "Event Router"], metrics: [{ label: "LoC", value: "6,400", color: "#22D3EE" }, { label: "Files", value: "25" }, { label: "Security", value: "TCB", color: "#EF4444" }], api: ["ipc_send()", "ipc_recv()", "syscall_dispatch()", "self_heal()"], status: "critical" } },
           { label: "HAL (CPU, MMU, Interrupts, Firmware, KASLR)", detail: "HW abstraction", color: "amber",
             description: "Hardware Abstraction Layer supporting x86_64, AArch64, and RISC-V. Handles CPU initialization, memory mapping, interrupt routing, firmware queries, and KASLR randomization.",
             info: { components: ["CPU Init", "MMU/Page Tables", "IDT/GDT", "ACPI Parser", "KASLR Engine"], metrics: [{ label: "Arch.", value: "3", color: "#F59E0B" }, { label: "LoC", value: "~61K" }], api: ["map_page()", "handle_interrupt()", "read_msr()"], dependencies: ["boot"], status: "active" } },
           { label: "Boot (Limine / UEFI / Multiboot2)", detail: "Protocol", color: "green",
             description: "Multi-protocol boot support — the kernel can boot via Limine, UEFI, or Multiboot2. Each protocol adapter translates boot info into a unified BootContext structure.",
-            info: { components: ["Limine Adapter", "UEFI Adapter", "Multiboot2 Adapter"], metrics: [{ label: "Protocoles", value: "3", color: "#22C55E" }], api: ["BootContext::memory_map()", "BootContext::framebuffer()"], status: "active" } },
+            info: { components: ["Limine Adapter", "UEFI Adapter", "Multiboot2 Adapter"], metrics: [{ label: "Protocols", value: "3", color: "#22C55E" }], api: ["BootContext::memory_map()", "BootContext::framebuffer()"], status: "active" } },
         ]} />
         <div className="grid md:grid-cols-2 gap-4 mt-6">
           <div className="bg-zinc-900/40 border border-zinc-800/40 rounded-xl p-5">
@@ -63,7 +62,7 @@ export default function ArchitecturePage() {
       </Section>
 
       {/* ── WORKSPACE ── */}
-      <Section title="Workspace Structure" id="workspace">
+      <Section title={d("section.workspace")} id="workspace">
         <p>{d("workspace.intro")}</p>
         <RustCode filename="Cargo.toml" language="toml">{`[workspace]
 resolver = "2"
@@ -100,9 +99,9 @@ exclude = ["graphics", "boot/src"]`}</RustCode>
         <p>{d("workspace.deps.intro")}</p>
         <InfoTable
           columns={[
-            { header: "Crate", key: "crate" },
-            { header: "Version", key: "version" },
-            { header: "Purpose", key: "purpose" },
+            { header: d("table.crate"), key: "crate" },
+            { header: d("table.version"), key: "version" },
+            { header: d("table.purpose"), key: "purpose" },
           ]}
           rows={[
             { crate: "spin", version: "0.9", purpose: "Spinlock primitives (no_std)" },
@@ -121,7 +120,7 @@ exclude = ["graphics", "boot/src"]`}</RustCode>
       </Section>
 
       {/* ── DEPENDENCY GRAPH ── */}
-      <Section title="Crate Dependency Graph" id="deps">
+      <Section title={d("section.deps")} id="deps">
         <p>{d("deps.intro")}</p>
         <DependencyGraph
           title="Crate Dependency Graph"
@@ -133,10 +132,10 @@ exclude = ["graphics", "boot/src"]`}</RustCode>
               info: { description: "Bootable image profiles that combine kernel, modules, and configuration into deployable ISO/disk images.", status: "stable", stats: [{ label: "Targets", value: "3" }, { label: "Type", value: "Build" }], features: ["Limine ISO profile", "UEFI disk profile", "QEMU test profile"] } },
             { id: "nexus", label: "nexus", detail: "812K LoC", x: 100, y: 90, width: 130, height: 40, color: "emerald",
               tooltip: "AI/ML-powered kernel intelligence engine",
-              info: { description: "NEXUS is the AI brain of Helix — 812K lines of ML models, anomaly detectors, crash predictors, and self-healing logic. Runs entirely in kernel space with no_std.", status: "wip", loc: "812K LoC", stats: [{ label: "ML Models", value: "6" }, { label: "Prédiction", value: "✓" }, { label: "Quarantine", value: "✓" }, { label: "Self-Heal", value: "✓" }], features: ["Decision trees & Random forests", "Neural network inference", "Crash prediction & failure classification", "Anomaly detection via statistical models", "Quarantine isolation & resource fencing", "Hot-swap & live recovery"] } },
+              info: { description: "NEXUS is the AI brain of Helix — 812K lines of ML models, anomaly detectors, crash predictors, and self-healing logic. Runs entirely in kernel space with no_std.", status: "wip", loc: "812K LoC", stats: [{ label: "ML Models", value: "6" }, { label: "Prediction", value: "✓" }, { label: "Quarantine", value: "✓" }, { label: "Self-Heal", value: "✓" }], features: ["Decision trees & Random forests", "Neural network inference", "Crash prediction & failure classification", "Anomaly detection via statistical models", "Quarantine isolation & resource fencing", "Hot-swap & live recovery"] } },
             { id: "modules", label: "modules", detail: "framework", x: 345, y: 90, width: 130, height: 40, color: "purple",
               tooltip: "Module system framework & trait definitions",
-              info: { description: "The module framework defines ModuleTrait, lifecycle state machine, hot-reload protocol, and module registry. All kernel extensions implement these traits.", status: "stable", stats: [{ label: "Traits", value: "4" }, { label: "États", value: "9" }], features: ["ModuleTrait lifecycle", "Hot-reload protocol", "Module registry", "Capability-based permissions"] } },
+              info: { description: "The module framework defines ModuleTrait, lifecycle state machine, hot-reload protocol, and module registry. All kernel extensions implement these traits.", status: "stable", stats: [{ label: "Traits", value: "4" }, { label: "States", value: "9" }], features: ["ModuleTrait lifecycle", "Hot-reload protocol", "Module registry", "Capability-based permissions"] } },
             { id: "benchmarks", label: "benchmarks", detail: "", x: 590, y: 90, width: 130, height: 40, color: "zinc",
               tooltip: "Performance benchmarks for kernel components",
               info: { description: "Benchmark suite measuring IPC latency, context switch time, memory allocation throughput, and syscall overhead.", status: "stable", features: ["IPC latency measurement", "Context switch benchmarks", "Allocation throughput tests"] } },
@@ -145,7 +144,7 @@ exclude = ["graphics", "boot/src"]`}</RustCode>
               info: { description: "Six subsystems providing core OS services: virtual memory management, process execution, device initialization, boot sequencing, userspace transition, and binary relocation.", status: "stable", loc: "~200K LoC", stats: [{ label: "Subsystems", value: "6" }, { label: "LoC", value: "~200K" }], features: ["Virtual memory with demand paging", "Multi-core process scheduling", "Ordered device initialization with rollback", "ELF loading & relocation", "Userspace ring-3 transition", "Init dependency graph with phases"] } },
             { id: "core", label: "core", detail: "TCB · 6.4K LoC", x: 340, y: 280, width: 140, height: 42, color: "cyan",
               tooltip: "Trusted Computing Base — minimal kernel core",
-              info: { description: "The Trusted Computing Base — only ~6,400 lines of code that must be correct. Implements IPC, syscall dispatch, orchestrator, and event routing. Mechanism only, never policy.", status: "stable", loc: "6.4K LoC", version: "0.1.0", stats: [{ label: "LoC", value: "6,400" }, { label: "Fichiers", value: "25" }, { label: "Sécurité", value: "TCB" }], features: ["Zero-copy IPC channels", "Capability-based syscall dispatch", "Orchestrator trait for module coordination", "Self-healing event monitor", "Minimal attack surface"] } },
+              info: { description: "The Trusted Computing Base — only ~6,400 lines of code that must be correct. Implements IPC, syscall dispatch, orchestrator, and event routing. Mechanism only, never policy.", status: "stable", loc: "6.4K LoC", version: "0.1.0", stats: [{ label: "LoC", value: "6,400" }, { label: "Files", value: "25" }, { label: "Security", value: "TCB" }], features: ["Zero-copy IPC channels", "Capability-based syscall dispatch", "Orchestrator trait for module coordination", "Self-healing event monitor", "Minimal attack surface"] } },
             { id: "hal", label: "hal", detail: "HW abstraction", x: 340, y: 370, width: 140, height: 42, color: "amber",
               tooltip: "Hardware Abstraction for x86_64, AArch64, RISC-V",
               info: { description: "Multi-architecture HAL supporting x86_64, AArch64, and RISC-V64. Abstracts CPU init, paging, interrupts, firmware, and KASLR behind unified traits.", status: "stable", loc: "~61K LoC", stats: [{ label: "Architectures", value: "3" }, { label: "LoC", value: "~61K" }], features: ["x86_64 (30K LoC)", "AArch64 (18K LoC)", "RISC-V 64 (13K LoC)", "ACPI/DeviceTree parsing", "KASLR randomization"] } },
@@ -183,14 +182,14 @@ exclude = ["graphics", "boot/src"]`}</RustCode>
       </Section>
 
       {/* ── METRICS ── */}
-      <Section title="Project Metrics" id="metrics">
+      <Section title={d("section.metrics")} id="metrics">
         <p>{d("metrics.intro")}</p>
         <InfoTable
           columns={[
-            { header: "Component", key: "component" },
-            { header: "Lines", key: "lines" },
-            { header: "Files", key: "files" },
-            { header: "Crate Path", key: "crates" },
+            { header: d("table.component"), key: "component" },
+            { header: d("table.lines"), key: "lines" },
+            { header: d("table.files"), key: "files" },
+            { header: d("table.crate_path"), key: "crates" },
           ]}
           rows={[
             { component: "Core TCB", lines: "~6,400", files: "25", crates: "core/" },
@@ -223,16 +222,16 @@ exclude = ["graphics", "boot/src"]`}</RustCode>
       </Section>
 
       {/* ── BUILD PROFILES ── */}
-      <Section title="Build Profiles" id="profiles">
+      <Section title={d("section.profiles")} id="profiles">
         <p>{d("profiles.intro")}</p>
         <InfoTable
           columns={[
-            { header: "Profile", key: "profile" },
-            { header: "opt-level", key: "opt" },
-            { header: "LTO", key: "lto" },
-            { header: "Panic", key: "panic" },
-            { header: "Strip", key: "strip" },
-            { header: "Notes", key: "notes" },
+            { header: d("table.profile"), key: "profile" },
+            { header: d("table.opt_level"), key: "opt" },
+            { header: d("table.lto"), key: "lto" },
+            { header: d("table.panic"), key: "panic" },
+            { header: d("table.strip"), key: "strip" },
+            { header: d("table.notes"), key: "notes" },
           ]}
           rows={[
             { profile: "dev", opt: "0", lto: "off", panic: "abort", strip: "none", notes: "Default debug build" },
@@ -270,7 +269,7 @@ panic = "unwind"`}</RustCode>
       </Section>
 
       {/* ── TOOLCHAIN ── */}
-      <Section title="Toolchain & Targets" id="toolchain">
+      <Section title={d("section.toolchain")} id="toolchain">
         <p>{d("toolchain.intro")}</p>
         <RustCode filename="rust-toolchain.toml" language="toml">{`[toolchain]
 channel = "nightly-2025-01-15"
@@ -305,7 +304,7 @@ targets = [
       </Section>
 
       {/* ── LINKER ── */}
-      <Section title="Linker Scripts" id="linker">
+      <Section title={d("section.linker")} id="linker">
         <p>{d("linker.intro")}</p>
         <RustCode filename="profiles/common/linker_base.ld" language="ld">{`__KERNEL_VMA_BASE = 0xFFFFFFFF80000000;  /* -2 GiB virtual */
 __KERNEL_LMA_BASE = 0x0000000000200000;  /* 2 MiB physical */
@@ -343,7 +342,7 @@ SECTIONS {
       </Section>
 
       {/* ── BOOT SEQUENCE ── */}
-      <Section title="Boot Sequence" id="boot">
+      <Section title={d("section.boot")} id="boot">
         <p>{d("boot.intro")}</p>
         <RustCode filename="boot/src/lib.rs">{`pub enum BootStage {
     PreInit,        // Parse boot info, validate environment
@@ -387,7 +386,7 @@ bitflags! {
         // ... 19 total capability flags
     }
 }`}</RustCode>
-        <h3 className="text-xl font-semibold text-white mt-10 mb-4">Minimal Profile Entry Point</h3>
+        <h3 className="text-xl font-semibold text-white mt-10 mb-4">{d("boot.minimal_profile")}</h3>
         <p>{d("boot.minimal.intro")}</p>
         <RustCode filename="profiles/minimal/src/main.rs">{`#[no_mangle]
 pub extern "C" fn kernel_main(multiboot2_info: *const u8) -> ! {
@@ -408,7 +407,7 @@ pub extern "C" fn kernel_main(multiboot2_info: *const u8) -> ! {
       </Section>
 
       {/* ── BUILD COMMANDS ── */}
-      <Section title="Build & Run Commands" id="commands">
+      <Section title={d("section.commands")} id="commands">
         <RustCode filename="terminal" language="bash">{`# ── Building ──
 ./scripts/build.sh              # Full release build (12 steps)
 ./scripts/build.sh --debug      # Debug build with DWARF info
@@ -431,13 +430,13 @@ make pre-commit                 # fmt + clippy + tests
 # ── Analysis ──
 size build/output/helix-kernel
 objdump -d build/output/helix-kernel`}</RustCode>
-        <h3 className="text-xl font-semibold text-white mt-10 mb-4">QEMU Targets</h3>
+        <h3 className="text-xl font-semibold text-white mt-10 mb-4">{d("commands.qemu_targets")}</h3>
         <InfoTable
           columns={[
-            { header: "Arch", key: "arch" },
-            { header: "Machine", key: "machine" },
-            { header: "CPU", key: "cpu" },
-            { header: "Devices", key: "devices" },
+            { header: d("table.arch"), key: "arch" },
+            { header: d("table.machine"), key: "machine" },
+            { header: d("table.cpu"), key: "cpu" },
+            { header: d("table.devices"), key: "devices" },
           ]}
           rows={[
             { arch: "x86_64", machine: "q35", cpu: "host (KVM) / qemu64", devices: "VirtIO, debug 0x402, serial" },
@@ -447,7 +446,6 @@ objdump -d build/output/helix-kernel`}</RustCode>
         />
       </Section>
 
-      <Footer />
     </div>
   );
 }
