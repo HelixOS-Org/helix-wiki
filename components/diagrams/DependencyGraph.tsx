@@ -230,7 +230,7 @@ export default function DependencyGraph({ nodes, edges, width = 820, height = 62
           <div className="w-1 h-6 rounded-full bg-gradient-to-b from-blue-500 to-purple-500" />
           <h3 className="text-sm font-bold text-white tracking-wide">{title}</h3>
           <div className="flex-1 h-px bg-gradient-to-r from-zinc-800 to-transparent" />
-          <span className="text-[10px] font-mono text-zinc-600">{nodes.length} nœuds · {edges.length} arêtes</span>
+          <span className="text-[10px] font-mono text-zinc-600">{nodes.length} nodes · {edges.length} edges</span>
         </div>
       )}
 
@@ -252,7 +252,7 @@ export default function DependencyGraph({ nodes, edges, width = 820, height = 62
           </button>
           <button onClick={() => setShowLegend(v => !v)} className={`no-pan h-7 px-2.5 flex items-center gap-1.5 rounded-lg border text-[10px] font-medium transition-colors cursor-pointer ${showLegend ? "bg-purple-500/10 border-purple-500/30 text-purple-400" : "bg-zinc-900/80 border-zinc-800 text-zinc-500 hover:text-zinc-300"}`}>
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><rect x="0.5" y="1" width="3" height="2" rx="0.5" fill="currentColor" opacity="0.6"/><line x1="5" y1="2" x2="9.5" y2="2" stroke="currentColor" strokeWidth="0.8"/><rect x="0.5" y="4.5" width="3" height="2" rx="0.5" fill="currentColor" opacity="0.4"/><line x1="5" y1="5.5" x2="9.5" y2="5.5" stroke="currentColor" strokeWidth="0.8"/></svg>
-            Légende
+            Legend
           </button>
           <div className="flex-1" />
           <div className="flex items-center gap-3 text-[10px] font-mono text-zinc-600">
@@ -263,7 +263,7 @@ export default function DependencyGraph({ nodes, edges, width = 820, height = 62
 
         {showLegend && (
           <div className="mb-3 bg-zinc-900/90 border border-zinc-800 rounded-xl p-4 backdrop-blur-sm" style={{ animation: `fadeIn${uid} 0.2s ease` }}>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">Légende des couleurs</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">Color Legend</p>
             <div className="flex flex-wrap gap-3">
               {Array.from(usedColors.entries()).map(([color, labels]) => {
                 const c = nodeColors[color] || nodeColors.blue;
@@ -271,8 +271,8 @@ export default function DependencyGraph({ nodes, edges, width = 820, height = 62
               })}
             </div>
             <div className="flex flex-wrap gap-4 mt-3 pt-3 border-t border-zinc-800">
-              <div className="flex items-center gap-2"><svg width="30" height="8"><line x1="0" y1="4" x2="30" y2="4" stroke="rgba(161,161,170,0.4)" strokeWidth="1.5"/></svg><span className="text-[10px] text-zinc-500">Dépendance directe</span></div>
-              <div className="flex items-center gap-2"><svg width="30" height="8"><line x1="0" y1="4" x2="30" y2="4" stroke="rgba(161,161,170,0.4)" strokeWidth="1.5" strokeDasharray="4 3"/></svg><span className="text-[10px] text-zinc-500">Dépendance optionnelle</span></div>
+              <div className="flex items-center gap-2"><svg width="30" height="8"><line x1="0" y1="4" x2="30" y2="4" stroke="rgba(161,161,170,0.4)" strokeWidth="1.5"/></svg><span className="text-[10px] text-zinc-500">Direct dependency</span></div>
+              <div className="flex items-center gap-2"><svg width="30" height="8"><line x1="0" y1="4" x2="30" y2="4" stroke="rgba(161,161,170,0.4)" strokeWidth="1.5" strokeDasharray="4 3"/></svg><span className="text-[10px] text-zinc-500">Optional dependency</span></div>
             </div>
           </div>
         )}
@@ -346,10 +346,10 @@ export default function DependencyGraph({ nodes, edges, width = 820, height = 62
                               {n.info.loc && <p className="text-[10px] font-mono text-zinc-500">📦 {n.info.loc}</p>}
                               {n.info.version && <p className="text-[10px] font-mono text-zinc-500">🏷️ v{n.info.version}</p>}
                               {status && <span className="inline-block text-[9px] font-medium px-1.5 py-0.5 rounded-full" style={{ background:status.bg, color:status.color }}>{status.label}</span>}
-                              <p className="text-[9px] text-zinc-600">↓{outDeg} dépendances · ↑{inDeg} dépendants</p>
+                              <p className="text-[9px] text-zinc-600">↓{outDeg} dependencies · ↑{inDeg} dependents</p>
                             </div>
                           ) : (
-                            !n.tooltip && <p className="text-[10px] text-zinc-500">↓{outDeg} deps · ↑{inDeg} dépendants</p>
+                            !n.tooltip && <p className="text-[10px] text-zinc-500">↓{outDeg} deps · ↑{inDeg} dependents</p>
                           )}
                         </div>
                       </foreignObject>
@@ -377,7 +377,7 @@ export default function DependencyGraph({ nodes, edges, width = 820, height = 62
               {selectedInfo.info.description && <p className="text-xs text-zinc-400 leading-relaxed mb-3">{selectedInfo.info.description}</p>}
               {selectedInfo.info.stats && selectedInfo.info.stats.length > 0 && (
                 <div className="mb-3">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 mb-1.5">Statistiques</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 mb-1.5">Statistics</p>
                   <div className="grid grid-cols-2 gap-1.5">
                     {selectedInfo.info.stats.map((s, i) => (<div key={i} className="bg-zinc-800/50 rounded-md px-2 py-1.5"><p className="text-[9px] text-zinc-600 uppercase">{s.label}</p><p className="text-xs font-bold text-white">{s.value}</p></div>))}
                   </div>
@@ -385,17 +385,17 @@ export default function DependencyGraph({ nodes, edges, width = 820, height = 62
               )}
               {selectedInfo.info.features && selectedInfo.info.features.length > 0 && (
                 <div className="mb-3">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 mb-1.5">Fonctionnalités</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 mb-1.5">Features</p>
                   <ul className="space-y-1">
                     {selectedInfo.info.features.map((f, i) => (<li key={i} className="flex items-start gap-1.5 text-[11px] text-zinc-400"><span className="mt-0.5 w-1 h-1 rounded-full bg-blue-500 shrink-0" />{f}</li>))}
                   </ul>
                 </div>
               )}
               <div className="pt-3 border-t border-zinc-800">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 mb-1.5">Connexions</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 mb-1.5">Connections</p>
                 <div className="flex gap-3">
-                  <div className="text-center"><p className="text-lg font-bold text-blue-400">{stats.inDeg.get(selectedInfo.id)||0}</p><p className="text-[9px] text-zinc-600">Dépendants</p></div>
-                  <div className="text-center"><p className="text-lg font-bold text-purple-400">{stats.outDeg.get(selectedInfo.id)||0}</p><p className="text-[9px] text-zinc-600">Dépendances</p></div>
+                  <div className="text-center"><p className="text-lg font-bold text-blue-400">{stats.inDeg.get(selectedInfo.id)||0}</p><p className="text-[9px] text-zinc-600">Dependents</p></div>
+                  <div className="text-center"><p className="text-lg font-bold text-purple-400">{stats.outDeg.get(selectedInfo.id)||0}</p><p className="text-[9px] text-zinc-600">Dependencies</p></div>
                 </div>
               </div>
             </div>
@@ -416,7 +416,7 @@ export default function DependencyGraph({ nodes, edges, width = 820, height = 62
       </div>
 
       <p className="text-[10px] text-zinc-600 text-center mt-3">
-        Cliquer un nœud pour voir ses dépendances · Molette pour zoomer · Glisser pour naviguer
+        Click a node to see its dependencies · Scroll to zoom · Drag to navigate
       </p>
     </div>
   );
