@@ -4,7 +4,6 @@ import PageHeader from "@/helix-wiki/components/PageHeader";
 import Section from "@/helix-wiki/components/Section";
 import RustCode from "@/helix-wiki/components/RustCode";
 import InfoTable from "@/helix-wiki/components/InfoTable";
-import Footer from "@/helix-wiki/components/Footer";
 import { useI18n } from "@/helix-wiki/lib/i18n";
 import { getDocString } from "@/helix-wiki/lib/docs-i18n";
 import filesystemContent from "@/helix-wiki/lib/docs-i18n/filesystem";
@@ -18,7 +17,7 @@ export default function FilesystemPage() {
       <PageHeader title={d("header.title")} subtitle={d("header.subtitle")} badge={d("header.badge")} gradient="from-amber-400 to-orange-500" />
 
       {/* ── CONSTANTS ── */}
-      <Section title="Constants & Architecture" id="constants">
+      <Section title={d("section.constants")} id="constants">
         <p>{d("constants.intro")}</p>
         <RustCode filename="fs/src/lib.rs">{`pub const HFS_MAGIC: u32 = 0x48465321;       // "HFS!"
 pub const BLOCK_SIZE: usize = 4096;           // 4 KiB blocks
@@ -44,16 +43,16 @@ pub const ROOT_INO: u64 = 1;                  // Root inode number
             info: { components: ["WAL Engine", "Transaction Manager", "Commit Protocol"], metrics: [{ label: "Garantie", value: "ACID", color: "#F97316" }, { label: "WAL", value: "Oui" }], api: ["txn_begin()", "txn_commit()", "txn_abort()"], status: "active" } },
           { label: "Metadata (B+Tree / Radix / Snapshot)", detail: "Indexing", color: "purple",
             description: "Multi-index metadata layer using B+Tree for file lookups, radix trees for prefix searches, and snapshot management for copy-on-write versioning.",
-            info: { components: ["B+Tree Index", "Radix Tree", "Snapshot Manager"], metrics: [{ label: "Index", value: "B+Tree", color: "#7B68EE" }, { label: "CoW", value: "Oui" }], api: ["btree_lookup()", "snapshot_create()", "radix_search()"], status: "active" } },
+            info: { components: ["B+Tree Index", "Radix Tree", "Snapshot Manager"], metrics: [{ label: "Index", value: "B+Tree", color: "#7B68EE" }, { label: "CoW", value: "Yes" }], api: ["btree_lookup()", "snapshot_create()", "radix_search()"], status: "active" } },
           { label: "Data (Extent / Block / ARC Cache)", detail: "Storage", color: "blue",
             description: "Extent-based data allocation with block-level management and ARC (Adaptive Replacement Cache) for intelligent read caching. Minimizes fragmentation through extent coalescing.",
             info: { components: ["Extent Allocator", "Block Manager", "ARC Cache"], metrics: [{ label: "Alloc", value: "Extent", color: "#4A90E2" }, { label: "Cache", value: "ARC" }], api: ["alloc_extent()", "read_block()", "cache_lookup()"], status: "active" } },
           { label: "Security (Crypto / Merkle / ACL)", detail: "Protection", color: "cyan",
             description: "Security layer with per-file AES-256 encryption, Merkle tree integrity verification for tamper detection, and POSIX ACL-based access control lists.",
-            info: { components: ["AES-256 Crypto", "Merkle Verifier", "ACL Engine"], metrics: [{ label: "Chiffrement", value: "AES-256", color: "#22D3EE" }, { label: "Intégrité", value: "Merkle" }], api: ["encrypt_block()", "verify_integrity()", "check_acl()"], status: "active" } },
+            info: { components: ["AES-256 Crypto", "Merkle Verifier", "ACL Engine"], metrics: [{ label: "Encryption", value: "AES-256", color: "#22D3EE" }, { label: "Integrity", value: "Merkle" }], api: ["encrypt_block()", "verify_integrity()", "check_acl()"], status: "active" } },
           { label: "Block Device Interface", detail: "Hardware", color: "zinc",
             description: "Low-level block device I/O abstraction layer. Provides sector-aligned read/write operations and DMA buffer management for storage hardware.",
-            info: { components: ["Block I/O", "DMA Buffers", "Device Queue"], metrics: [{ label: "Secteur", value: "512B/4K" }], api: ["block_read()", "block_write()", "flush()"], status: "passive" } },
+            info: { components: ["Block I/O", "DMA Buffers", "Device Queue"], metrics: [{ label: "Sector", value: "512B/4K" }], api: ["block_read()", "block_write()", "flush()"], status: "passive" } },
         ]} />
 
         <h3 className="text-xl font-semibold text-white mt-10 mb-4">Module Map</h3>
@@ -77,7 +76,7 @@ pub const ROOT_INO: u64 = 1;                  // Root inode number
       </Section>
 
       {/* ── ON-DISK LAYOUT ── */}
-      <Section title="On-Disk Layout" id="layout">
+      <Section title={d("section.layout")} id="layout">
         <p>{d("layout.intro")}</p>
         <RustCode filename="fs/src/vfs/superblock.rs">{`pub struct Superblock {
     pub magic: u32,            // 0x48465321 ("HFS!")
@@ -109,7 +108,7 @@ pub enum FsState {
       </Section>
 
       {/* ── INODES ── */}
-      <Section title="Inode Structure" id="inodes">
+      <Section title={d("section.inodes")} id="inodes">
         <p>{d("inodes.intro")}</p>
         <RustCode filename="fs/src/vfs/inode.rs">{`pub struct Inode {
     pub ino: u64,              // Unique inode number
@@ -199,7 +198,7 @@ bitflags! {
       </Section>
 
       {/* ── POSIX ── */}
-      <Section title="POSIX File API" id="posix">
+      <Section title={d("section.posix")} id="posix">
         <p>{d("posix.intro")}</p>
         <RustCode filename="fs/src/ops/mod.rs">{`pub trait FileSystem: Send + Sync {
     // ── File operations ──
@@ -254,7 +253,7 @@ pub struct FileStat {
       </Section>
 
       {/* ── COW ── */}
-      <Section title="Copy-on-Write" id="cow">
+      <Section title={d("section.cow")} id="cow">
         <p>{d("cow.intro")}</p>
         <RustCode filename="fs/src/data/cow.rs">{`pub struct CowManager {
     refcounts: BTreeMap<u64, u32>,   // block → reference count
@@ -295,7 +294,7 @@ impl CowManager {
       </Section>
 
       {/* ── JOURNAL ── */}
-      <Section title="Journal" id="journal">
+      <Section title={d("section.journal")} id="journal">
         <p>{d("journal.intro")}</p>
         <RustCode filename="fs/src/journal/mod.rs">{`pub struct Journal {
     log: CircularBuffer,    // Ring buffer of journal entries
@@ -365,7 +364,7 @@ impl Journal {
       </Section>
 
       {/* ── BTREE ── */}
-      <Section title="B+Tree Index" id="btree">
+      <Section title={d("section.btree")} id="btree">
         <p>{d("btree.intro")}</p>
         <RustCode filename="fs/src/metadata/btree.rs">{`pub struct BPlusTree<K: Ord + Clone, V: Clone> {
     root: Option<Box<Node<K, V>>>,
@@ -415,7 +414,7 @@ impl<K: Ord + Clone, V: Clone> BPlusTree<K, V> {
       </Section>
 
       {/* ── ARC ── */}
-      <Section title="ARC Cache" id="arc">
+      <Section title={d("section.arc")} id="arc">
         <p>{d("arc.intro")}</p>
         <RustCode filename="fs/src/data/cache.rs">{`pub struct ArcCache<K: Hash + Eq + Clone, V: Clone> {
     // ── Active lists (contain actual data) ──
@@ -459,7 +458,7 @@ impl<K: Hash + Eq + Clone, V: Clone> ArcCache<K, V> {
       </Section>
 
       {/* ── FEATURES ── */}
-      <Section title="Feature Summary" id="features">
+      <Section title={d("section.features")} id="features">
         <p>{d("features.intro")}</p>
         <InfoTable
           columns={[
@@ -488,7 +487,6 @@ impl<K: Hash + Eq + Clone, V: Clone> ArcCache<K, V> {
         </div>
       </Section>
 
-      <Footer />
     </div>
   );
 }
