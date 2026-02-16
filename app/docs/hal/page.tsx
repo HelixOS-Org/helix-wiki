@@ -4,7 +4,6 @@ import PageHeader from "@/helix-wiki/components/PageHeader";
 import Section from "@/helix-wiki/components/Section";
 import RustCode from "@/helix-wiki/components/RustCode";
 import InfoTable from "@/helix-wiki/components/InfoTable";
-import Footer from "@/helix-wiki/components/Footer";
 import { useI18n } from "@/helix-wiki/lib/i18n";
 import { getDocString } from "@/helix-wiki/lib/docs-i18n";
 import halContent from "@/helix-wiki/lib/docs-i18n/hal";
@@ -17,7 +16,7 @@ export default function HalPage() {
       <PageHeader title={d("header.title")} subtitle={d("header.subtitle")} badge={d("header.badge")} gradient="from-emerald-400 to-teal-500" />
 
       {/* ── CORE TRAIT ── */}
-      <Section title="Core HAL Trait" id="hal-trait">
+      <Section title={d("section.core_trait")} id="hal-trait">
         <p>{d("hal.intro")}</p>
         <RustCode filename="hal/src/lib.rs">{`pub enum HalError {
     NotInitialized,
@@ -67,7 +66,7 @@ pub fn hal_ref() -> &'static StubHal;`}</RustCode>
       </Section>
 
       {/* ── CPU ── */}
-      <Section title="CPU Abstraction" id="cpu">
+      <Section title={d("section.cpu")} id="cpu">
         <p>{d("cpu.intro")}</p>
         <RustCode filename="hal/src/cpu.rs">{`/// ~20 methods covering the entire CPU surface.
 pub trait CpuAbstraction: Send + Sync {
@@ -137,7 +136,7 @@ pub trait FpuContext: Send + Sync {
       </Section>
 
       {/* ── MMU ── */}
-      <Section title="MMU & Page Tables" id="mmu">
+      <Section title={d("section.mmu")} id="mmu">
         <p>{d("mmu.intro")}</p>
         <RustCode filename="hal/src/mmu.rs">{`bitflags! {
     pub struct PageFlags: u64 {
@@ -213,7 +212,7 @@ pub trait TlbManager: Send + Sync {
       </Section>
 
       {/* ── INTERRUPTS ── */}
-      <Section title="Interrupt Controller" id="interrupts">
+      <Section title={d("section.interrupts")} id="interrupts">
         <p>{d("interrupts.intro")}</p>
         <RustCode filename="hal/src/interrupts.rs">{`/// ~18 methods covering the full interrupt lifecycle.
 pub trait InterruptController: Send + Sync {
@@ -280,7 +279,7 @@ pub struct PageFaultInfo {
       </Section>
 
       {/* ── FIRMWARE ── */}
-      <Section title="Firmware Interface" id="firmware">
+      <Section title={d("section.firmware")} id="firmware">
         <p>{d("firmware.intro")}</p>
         <RustCode filename="hal/src/firmware.rs">{`pub trait FirmwareInterface: Send + Sync {
     fn firmware_type(&self) -> FirmwareType;
@@ -341,7 +340,7 @@ pub enum MemoryRegionType {
       </Section>
 
       {/* ── KASLR ── */}
-      <Section title="KASLR" id="kaslr">
+      <Section title={d("section.kaslr")} id="kaslr">
         <p>{d("kaslr.intro")}</p>
         <RustCode filename="hal/src/kaslr.rs">{`pub struct KaslrConfig {
     pub min_address: u64,     // Lowest allowed kernel base
@@ -394,7 +393,7 @@ static KASLR_INITIALIZED: AtomicBool = AtomicBool::new(false);`}</RustCode>
       </Section>
 
       {/* ── RELOCATION ── */}
-      <Section title="ELF Relocation Engine" id="relocation">
+      <Section title={d("section.relocation")} id="relocation">
         <p>{d("relocation.intro")}</p>
         <RustCode filename="hal/src/relocation.rs">{`pub enum RelocationType {
     Relative,      // R_X86_64_RELATIVE — base + addend
@@ -439,7 +438,7 @@ pub struct RelocStats {
       </Section>
 
       {/* ── BACKENDS ── */}
-      <Section title="Architecture Backends" id="backends">
+      <Section title={d("section.backends")} id="backends">
         <p>{d("backends.intro")}</p>
         <div className="grid lg:grid-cols-3 gap-6 mt-6">
           <div className="bg-zinc-900/40 border border-zinc-800/40 rounded-xl p-6">
@@ -490,7 +489,6 @@ pub struct RelocStats {
         </div>
       </Section>
 
-      <Footer />
     </div>
   );
 }
