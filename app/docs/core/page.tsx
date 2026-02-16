@@ -3,7 +3,7 @@
 import PageHeader from "@/helix-wiki/components/PageHeader";
 import Section from "@/helix-wiki/components/Section";
 import RustCode from "@/helix-wiki/components/RustCode";
-import Footer from "@/helix-wiki/components/Footer";
+import FileTree from "@/helix-wiki/components/diagrams/FileTree";
 import { useI18n } from "@/helix-wiki/lib/i18n";
 import { getDocString } from "@/helix-wiki/lib/docs-i18n";
 import coreContent from "@/helix-wiki/lib/docs-i18n/core";
@@ -16,46 +16,69 @@ export default function CorePage() {
       <PageHeader title={d("header.title")} subtitle={d("header.subtitle")} badge={d("header.badge")} gradient="from-blue-400 to-indigo-500" />
 
       {/* ── MODULE MAP ── */}
-      <Section title="Module Map" id="map">
+      <Section title={d("section.map")} id="map">
         <p>{d("map.intro")}</p>
-        <div className="my-8 font-mono text-sm bg-zinc-900/50 border border-zinc-800/60 rounded-xl p-6 overflow-x-auto">
-          <pre className="text-zinc-300">{`core/src/
-├── lib.rs                    300 LoC   KernelState, KernelError, KernelComponent
-├── interrupts/
-│   ├── mod.rs                 99       InterruptDispatcher (256-vector table)
-│   ├── router.rs              92       RoutingMode, InterruptRouter
-│   ├── handlers.rs            65       Default handlers (timer, PF, GPF, DF)
-│   └── exceptions.rs         113       ExceptionHandler trait, 32-slot dispatcher
-├── ipc/
-│   ├── mod.rs                 88       IpcError enum, IpcResult
-│   ├── channel.rs            407       Bounded MPSC ring-buffer channels
-│   ├── event_bus.rs          437       Pub-sub EventBus (priority subscriptions)
-│   └── message_router.rs    485       Point-to-point MessageRouter (BTreeMap)
-├── syscall/
-│   ├── mod.rs                163       SyscallArgs (6-arg ABI), SyscallError
-│   ├── gateway.rs            101       helix_syscall_entry() — extern "C"
-│   ├── dispatcher.rs         103       SyscallDispatcher (pre/post hooks)
-│   ├── registry.rs           186       SyscallRegistry (table[512]), define_syscall!
-│   └── validation.rs        127       validate_user_ptr/string/fd/flags
-├── orchestrator/
-│   ├── mod.rs                334       KernelOrchestrator, Subsystem trait
-│   ├── lifecycle.rs          177       LifecycleStage (5), ShutdownReason
-│   ├── capability_broker.rs  345       CapabilityRights (10 bitflags)
-│   ├── resource_broker.rs   280       ResourceClass (8), ResourceProvider
-│   └── panic_handler.rs     138       PanicAction, kernel_assert!
-├── selfheal.rs               555       SelfHealingManager, HealthStatus (6)
-├── hotreload/
-│   ├── mod.rs                694       HotReloadableModule, hot_swap()
-│   ├── crasher.rs            181       CrasherModule (test module)
-│   └── schedulers.rs         653       RoundRobin + Priority with hot-reload
-└── debug/
-    ├── mod.rs                 87       DebugCommand trait, DebugInterface
-    └── console.rs            117       kprint!/kprintln!/kdebug!/kinfo!/kwarn!`}</pre>
-        </div>
+        <FileTree title="core/src/" tree={[
+          { name: "core/src", icon: "folder",
+            info: { loc: 6400, description: "Trusted Computing Base — minimal kernel core providing IPC, syscalls, orchestration, self-healing, and hot-reload.", status: "stable" },
+            children: [
+              { name: "lib.rs", detail: "KernelState, KernelError, KernelComponent",
+                info: { loc: 300, description: "Root module — kernel state machine, version, error types, and component trait definitions.", status: "stable", exports: ["KernelState", "KernelError", "KernelComponent", "CURRENT_VERSION"] } },
+              { name: "interrupts", icon: "folder", detail: "Interrupt dispatch & routing",
+                info: { loc: 369, description: "256-vector interrupt dispatcher with routing modes, default handlers (timer, PF, GPF, DF), and exception trait.", status: "stable" },
+                children: [
+                  { name: "mod.rs", detail: "InterruptDispatcher (256-vector table)", info: { loc: 99, status: "stable", exports: ["InterruptDispatcher"] } },
+                  { name: "router.rs", detail: "RoutingMode, InterruptRouter", info: { loc: 92, status: "stable", exports: ["RoutingMode", "InterruptRouter"] } },
+                  { name: "handlers.rs", detail: "Default handlers (timer, PF, GPF, DF)", info: { loc: 65, status: "stable" } },
+                  { name: "exceptions.rs", detail: "ExceptionHandler trait, 32-slot dispatcher", info: { loc: 113, status: "stable", exports: ["ExceptionHandler"] } },
+                ] },
+              { name: "ipc", icon: "folder", detail: "Inter-process communication",
+                info: { loc: 1417, description: "IPC subsystem — bounded MPSC ring-buffer channels, pub-sub event bus with priority subscriptions, and point-to-point message router.", status: "stable" },
+                children: [
+                  { name: "mod.rs", detail: "IpcError enum, IpcResult", info: { loc: 88, status: "stable", exports: ["IpcError", "IpcResult"] } },
+                  { name: "channel.rs", detail: "Bounded MPSC ring-buffer channels", info: { loc: 407, status: "stable", exports: ["Channel", "Sender", "Receiver"] } },
+                  { name: "event_bus.rs", detail: "Pub-sub EventBus (priority subscriptions)", info: { loc: 437, status: "stable", exports: ["EventBus", "Subscription"] } },
+                  { name: "message_router.rs", detail: "Point-to-point MessageRouter (BTreeMap)", info: { loc: 485, status: "stable", exports: ["MessageRouter"] } },
+                ] },
+              { name: "syscall", icon: "folder", detail: "System call framework",
+                info: { loc: 680, description: "512-entry syscall dispatch table, 6-argument ABI, extern C gateway, pre/post hooks, and user pointer validation.", status: "stable" },
+                children: [
+                  { name: "mod.rs", detail: "SyscallArgs (6-arg ABI), SyscallError", info: { loc: 163, status: "stable", exports: ["SyscallArgs", "SyscallError"] } },
+                  { name: "gateway.rs", detail: "helix_syscall_entry() — extern \"C\"", info: { loc: 101, status: "stable" } },
+                  { name: "dispatcher.rs", detail: "SyscallDispatcher (pre/post hooks)", info: { loc: 103, status: "stable", exports: ["SyscallDispatcher"] } },
+                  { name: "registry.rs", detail: "SyscallRegistry (table[512]), define_syscall!", info: { loc: 186, status: "stable", exports: ["SyscallRegistry", "define_syscall!"] } },
+                  { name: "validation.rs", detail: "validate_user_ptr/string/fd/flags", info: { loc: 127, status: "stable" } },
+                ] },
+              { name: "orchestrator", icon: "folder", detail: "Kernel orchestration",
+                info: { loc: 1274, description: "Kernel orchestrator managing subsystem lifecycle, capability brokering, resource provisioning, and panic handling.", status: "stable" },
+                children: [
+                  { name: "mod.rs", detail: "KernelOrchestrator, Subsystem trait", info: { loc: 334, status: "stable", exports: ["KernelOrchestrator", "Subsystem"] } },
+                  { name: "lifecycle.rs", detail: "LifecycleStage (5), ShutdownReason", info: { loc: 177, status: "stable", exports: ["LifecycleStage", "ShutdownReason"] } },
+                  { name: "capability_broker.rs", detail: "CapabilityRights (10 bitflags)", info: { loc: 345, status: "stable", exports: ["CapabilityRights", "CapabilityBroker"] } },
+                  { name: "resource_broker.rs", detail: "ResourceClass (8), ResourceProvider", info: { loc: 280, status: "stable", exports: ["ResourceClass", "ResourceProvider"] } },
+                  { name: "panic_handler.rs", detail: "PanicAction, kernel_assert!", info: { loc: 138, status: "stable", exports: ["PanicAction", "kernel_assert!"] } },
+                ] },
+              { name: "selfheal.rs", detail: "SelfHealingManager, HealthStatus (6)",
+                info: { loc: 555, description: "Self-healing manager — monitors module health, quarantines failures, and orchestrates recovery strategies.", status: "stable", exports: ["SelfHealingManager", "HealthStatus", "RecoveryAction"] } },
+              { name: "hotreload", icon: "folder", detail: "Hot-reload framework",
+                info: { loc: 1528, description: "Live module replacement framework — hot-swap modules without reboot. Includes test crasher module and scheduler implementations.", status: "stable" },
+                children: [
+                  { name: "mod.rs", detail: "HotReloadableModule, hot_swap()", info: { loc: 694, status: "stable", exports: ["HotReloadableModule", "hot_swap"] } },
+                  { name: "crasher.rs", detail: "CrasherModule (test module)", info: { loc: 181, status: "stable" } },
+                  { name: "schedulers.rs", detail: "RoundRobin + Priority with hot-reload", info: { loc: 653, status: "stable" } },
+                ] },
+              { name: "debug", icon: "folder", detail: "Debug interface",
+                info: { loc: 204, description: "Debug command trait and serial console macros (kprint!, kprintln!, kdebug!, kinfo!, kwarn!).", status: "stable" },
+                children: [
+                  { name: "mod.rs", detail: "DebugCommand trait, DebugInterface", info: { loc: 87, status: "stable", exports: ["DebugCommand", "DebugInterface"] } },
+                  { name: "console.rs", detail: "kprint!/kprintln!/kdebug!/kinfo!/kwarn!", info: { loc: 117, status: "stable" } },
+                ] },
+            ] },
+        ]} />
       </Section>
 
       {/* ── KERNEL TYPES ── */}
-      <Section title="Kernel Types" id="types">
+      <Section title={d("section.types")} id="types">
         <p>{d("types.intro")}</p>
         <RustCode filename="core/src/lib.rs">{`pub struct KernelVersion {
     pub major: u8,
@@ -113,7 +136,7 @@ pub trait KernelEventListener: Send + Sync {
       </Section>
 
       {/* ── KERNEL COMPONENT ── */}
-      <Section title="KernelComponent Trait" id="component">
+      <Section title={d("section.component")} id="component">
         <p>{d("component.intro")}</p>
         <RustCode filename="core/src/lib.rs">{`/// The universal contract for all kernel components.
 /// This is the core abstraction — every subsystem, every module,
@@ -151,7 +174,7 @@ pub struct ComponentStats {
       </Section>
 
       {/* ── ORCHESTRATOR ── */}
-      <Section title="Orchestrator" id="orchestrator">
+      <Section title={d("section.orchestrator")} id="orchestrator">
         <p>{d("orchestrator.intro")}</p>
         <RustCode filename="core/src/orchestrator/mod.rs">{`/// Every subsystem must implement this trait.
 /// The orchestrator uses it to manage boot ordering and shutdown.
@@ -257,7 +280,7 @@ pub trait ResourceProvider: Send + Sync {
       </Section>
 
       {/* ── SYSCALLS ── */}
-      <Section title="Syscall Framework" id="syscalls">
+      <Section title={d("section.syscalls")} id="syscalls">
         <p>{d("syscalls.intro")}</p>
         <RustCode filename="core/src/syscall/mod.rs">{`/// 6-register argument pack — matches the x86_64 ABI:
 /// rdi, rsi, rdx, r10, r8, r9
@@ -368,7 +391,7 @@ pub fn validate_fd(fd: u64) -> Result<(), SyscallError>;`}</RustCode>
       </Section>
 
       {/* ── IPC ── */}
-      <Section title="IPC — Inter-Process Communication" id="ipc">
+      <Section title={d("section.ipc")} id="ipc">
         <p>{d("ipc.intro")}</p>
 
         <h3 className="text-xl font-semibold text-white mt-8 mb-4">{d("ipc.channels.title")}</h3>
@@ -487,7 +510,7 @@ pub struct Response {
       </Section>
 
       {/* ── SELF HEAL ── */}
-      <Section title="Self-Heal & Hot-Reload" id="selfheal">
+      <Section title={d("section.selfheal")} id="selfheal">
         <p>{d("selfheal.intro")}</p>
 
         <h3 className="text-xl font-semibold text-white mt-8 mb-4">{d("selfheal.manager.title")}</h3>
@@ -623,7 +646,7 @@ pub struct PriorityScheduler {
       </Section>
 
       {/* ── INTERRUPTS ── */}
-      <Section title="Interrupt Infrastructure" id="interrupts">
+      <Section title={d("section.interrupts")} id="interrupts">
         <p>{d("interrupts.intro")}</p>
         <RustCode filename="core/src/interrupts/mod.rs">{`/// 256-vector interrupt dispatch table.
 /// Vectors 0-31: CPU exceptions (page fault, GPF, double fault, etc.)
@@ -681,7 +704,7 @@ pub struct ExceptionDispatcher {
       </Section>
 
       {/* ── DEBUG ── */}
-      <Section title="Debug Console" id="debug">
+      <Section title={d("section.debug")} id="debug">
         <p>{d("debug.intro")}</p>
         <RustCode filename="core/src/debug/console.rs">{`/// Print macros — work in no_std, route through DebugInterface.
 ///
@@ -707,7 +730,7 @@ pub trait DebugCommand: Send + Sync {
       </Section>
 
       {/* ── PANIC ── */}
-      <Section title="Panic Handler" id="panic">
+      <Section title={d("section.panic")} id="panic">
         <p>{d("panic.intro")}</p>
         <RustCode filename="core/src/orchestrator/panic_handler.rs">{`pub enum PanicAction {
     Halt,           // Halt CPU forever
@@ -729,7 +752,6 @@ pub trait DebugCommand: Send + Sync {
 ///     → always panics — marks unreachable code paths`}</RustCode>
       </Section>
 
-      <Footer />
     </div>
   );
 }
