@@ -268,7 +268,7 @@ export default function FlowDiagram({ phases, note, title }: FlowDiagramProps) {
       {/* Controls */}
       <div className="flex items-center justify-center gap-4 mt-2">
         <button onClick={() => setSelectedPhase(null)} className="text-[10px] text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer">
-          {selectedPhase !== null ? "✕ Réinitialiser" : "Cliquer sur une phase pour isoler · Cliquer un nœud pour les détails"}
+          {selectedPhase !== null ? "✕ Reset" : "Click a phase to isolate · Click a node for details"}
         </button>
       </div>
 
