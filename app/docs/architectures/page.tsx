@@ -4,7 +4,6 @@ import PageHeader from "@/helix-wiki/components/PageHeader";
 import Section from "@/helix-wiki/components/Section";
 import RustCode from "@/helix-wiki/components/RustCode";
 import InfoTable from "@/helix-wiki/components/InfoTable";
-import Footer from "@/helix-wiki/components/Footer";
 import { useI18n } from "@/helix-wiki/lib/i18n";
 import { getDocString } from "@/helix-wiki/lib/docs-i18n";
 import architecturesContent from "@/helix-wiki/lib/docs-i18n/architectures";
@@ -21,7 +20,7 @@ export default function ArchitecturesPage() {
       />
 
       {/* ── OVERVIEW ── */}
-      <Section title="Architecture Comparison" id="comparison">
+      <Section title={d("section.comparison")} id="comparison">
         <p>{d("comparison.intro")}</p>
         <InfoTable
           columns={[
@@ -47,7 +46,7 @@ export default function ArchitecturesPage() {
       </Section>
 
       {/* ── x86_64 ── */}
-      <Section title="x86_64" id="x86_64">
+      <Section title={d("section.x86_64")} id="x86_64">
         <p>{d("x86.intro")}</p>
 
         <h3 className="text-xl font-semibold text-white mt-8 mb-4">Module Structure</h3>
@@ -151,7 +150,7 @@ pub fn init_x86_64(boot_info: &BootContext) {
       </Section>
 
       {/* ── AArch64 ── */}
-      <Section title="AArch64 (ARM64)" id="aarch64">
+      <Section title={d("section.aarch64")} id="aarch64">
         <p>{d("aarch64.intro")}</p>
 
         <h3 className="text-xl font-semibold text-white mt-8 mb-4">Framework Overview</h3>
@@ -224,7 +223,7 @@ pub fn init_x86_64(boot_info: &BootContext) {
       </Section>
 
       {/* ── RISC-V ── */}
-      <Section title="RISC-V 64 (RV64GC)" id="riscv">
+      <Section title={d("section.riscv64")} id="riscv">
         <p>{d("riscv.intro")}</p>
 
         <h3 className="text-xl font-semibold text-white mt-8 mb-4">Privilege Model</h3>
@@ -316,7 +315,7 @@ pub fn init_x86_64(boot_info: &BootContext) {
       </Section>
 
       {/* ── HAL TRAIT ── */}
-      <Section title="Unified HAL Trait" id="hal-trait">
+      <Section title={d("section.unified")} id="hal-trait">
         <p>{d("unified.intro")}</p>
         <RustCode filename="hal/src/lib.rs">{`/// The core HAL trait — every architecture must implement this
 pub trait Hal {
@@ -357,7 +356,6 @@ pub trait InterruptControllerTrait {
         </div>
       </Section>
 
-      <Footer />
     </div>
   );
 }
