@@ -166,17 +166,17 @@ export default function StateMachine({ nodes, transitions, width = 700, height =
           <div className="w-1 h-5 rounded-full bg-gradient-to-b from-blue-500 to-green-500" />
           <h3 className="text-sm font-bold text-white tracking-wide">{title}</h3>
           <div className="flex-1 h-px bg-gradient-to-r from-zinc-800 to-transparent" />
-          <span className="text-[10px] font-mono text-zinc-600">{nodes.length} états · {transitions.length} transitions</span>
+          <span className="text-[10px] font-mono text-zinc-600">{nodes.length} states · {transitions.length} transitions</span>
         </div>
       )}
 
       {/* State type legend */}
       <div className="flex items-center gap-4 mb-3 text-[10px] text-zinc-600">
-        <span className="flex items-center gap-1"><span className="text-green-500">▶</span> État initial</span>
-        <span className="flex items-center gap-1"><span className="text-red-500">⚠</span> État erreur</span>
+        <span className="flex items-center gap-1"><span className="text-green-500">▶</span> Initial state</span>
+        <span className="flex items-center gap-1"><span className="text-red-500">⚠</span> Error state</span>
         <span className="flex items-center gap-1">
           <svg width="20" height="6"><line x1="0" y1="3" x2="20" y2="3" stroke="rgba(74,144,226,0.6)" strokeWidth="1.5" strokeDasharray="3 2"/></svg>
-          Flux animé
+          Animated flow
         </span>
       </div>
 
@@ -302,7 +302,7 @@ export default function StateMachine({ nodes, transitions, width = 700, height =
                 <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full" style={{
                   background: selectedInfo.type === "error" ? "rgba(239,68,68,0.15)" : "rgba(34,197,94,0.15)",
                   color: selectedInfo.type === "error" ? "#EF4444" : "#22C55E",
-                }}>{selectedInfo.type === "start" ? "Initial" : selectedInfo.type === "error" ? "Erreur" : selectedInfo.type}</span>
+                }}>{selectedInfo.type === "start" ? "Initial" : selectedInfo.type === "error" ? "Error" : selectedInfo.type}</span>
               )}
               <button onClick={() => setSelectedNode(null)} className="ml-auto text-zinc-600 hover:text-white transition-colors cursor-pointer">
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
@@ -320,13 +320,13 @@ export default function StateMachine({ nodes, transitions, width = 700, height =
 
             {selectedInfo.info.canSelfHeal && (
               <div className="mb-3 text-[10px] px-2 py-1.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-                ↻ Self-healing activé
+                ↻ Self-healing enabled
               </div>
             )}
 
             {selectedInfo.info.entryActions && selectedInfo.info.entryActions.length > 0 && (
               <div className="mb-3">
-                <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-600 mb-1.5">Actions d&apos;entrée</p>
+                <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-600 mb-1.5">Entry actions</p>
                 <ul className="space-y-0.5">
                   {selectedInfo.info.entryActions.map((a, i) => (
                     <li key={i} className="flex items-center gap-1.5 text-[10px] font-mono text-blue-400"><span className="text-[8px]">→</span>{a}</li>
@@ -337,7 +337,7 @@ export default function StateMachine({ nodes, transitions, width = 700, height =
 
             {selectedInfo.info.exitActions && selectedInfo.info.exitActions.length > 0 && (
               <div className="mb-3">
-                <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-600 mb-1.5">Actions de sortie</p>
+                <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-600 mb-1.5">Exit actions</p>
                 <ul className="space-y-0.5">
                   {selectedInfo.info.exitActions.map((a, i) => (
                     <li key={i} className="flex items-center gap-1.5 text-[10px] font-mono text-amber-400"><span className="text-[8px]">←</span>{a}</li>
@@ -359,8 +359,8 @@ export default function StateMachine({ nodes, transitions, width = 700, height =
 
             <div className="pt-3 border-t border-zinc-800">
               <div className="flex gap-3 text-center">
-                <div><p className="text-sm font-bold text-blue-400">{transitions.filter(t => t.to === selectedInfo.id).length}</p><p className="text-[9px] text-zinc-600">Entrantes</p></div>
-                <div><p className="text-sm font-bold text-purple-400">{transitions.filter(t => t.from === selectedInfo.id).length}</p><p className="text-[9px] text-zinc-600">Sortantes</p></div>
+                <div><p className="text-sm font-bold text-blue-400">{transitions.filter(t => t.to === selectedInfo.id).length}</p><p className="text-[9px] text-zinc-600">Incoming</p></div>
+                <div><p className="text-sm font-bold text-purple-400">{transitions.filter(t => t.from === selectedInfo.id).length}</p><p className="text-[9px] text-zinc-600">Outgoing</p></div>
               </div>
             </div>
           </div>
@@ -368,7 +368,7 @@ export default function StateMachine({ nodes, transitions, width = 700, height =
       </div>
 
       <p className="text-[10px] text-zinc-600 text-center mt-3">
-        Cliquer un état pour voir ses détails · Survoler une transition pour ses conditions
+        Click a state to see its details · Hover a transition for its conditions
       </p>
     </div>
   );
