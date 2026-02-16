@@ -1,18 +1,9 @@
-import type { Metadata } from "next";
+"use client";
 import Link from "next/link";
-import Footer from "@/helix-wiki/components/Footer";
 import RustCode from "@/helix-wiki/components/RustCode";
-
-export const metadata: Metadata = {
-  title: "Download — Bootable ISO for x86_64 · BIOS + UEFI",
-  description: "Download the Helix OS minimal profile ISO image. Boot in QEMU or on bare metal — x86_64, BIOS and UEFI compatible. 32 MB, boots in under 1 second, includes serial console and NEXUS AI.",
-  alternates: { canonical: "/download" },
-  openGraph: {
-    title: "Download Helix OS — Try the Bootable ISO",
-    description: "32 MB bootable ISO for x86_64 with GRUB Multiboot2. Launch with `qemu-system-x86_64 -cdrom helix-minimal.iso -m 128M` and explore the kernel in seconds.",
-    url: "https://helix-wiki.com/download",
-  },
-};
+import { useI18n } from "@/helix-wiki/lib/i18n";
+import { getDocString } from "@/helix-wiki/lib/docs-i18n";
+import downloadContent from "@/helix-wiki/lib/docs-i18n/download";
 
 /* ── Profile config (TOML shown via RustCode for highlighting) ── */
 const profileToml = `[profile]
@@ -249,8 +240,8 @@ export default function DownloadPage() {
           <div className="space-y-3">
             {qemuCmds.map((q) => (
               <div key={q.label} className="rounded-xl bg-zinc-950/50 border border-zinc-800/60 hover:border-zinc-700/60 transition-colors overflow-hidden">
-                <div className="flex items-center gap-4 px-5 py-4">
-                  <span className="text-xs text-zinc-500 font-medium w-40 shrink-0">{q.label}</span>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-5 py-4">
+                  <span className="text-xs text-zinc-500 font-medium sm:w-40 shrink-0">{q.label}</span>
                   <code className="flex-1 text-sm font-mono text-zinc-300 overflow-x-auto">
                     <span className="text-green-400">$ </span>{q.cmd}
                   </code>
@@ -307,9 +298,9 @@ export default function DownloadPage() {
             {specs.map((s, i) => (
               <div
                 key={s.label}
-                className={`flex items-center px-6 py-4 ${i !== specs.length - 1 ? "border-b border-zinc-800/40" : ""} ${i % 2 === 0 ? "bg-white/[0.01]" : ""}`}
+                className={`flex flex-col sm:flex-row sm:items-center px-6 py-4 gap-1 sm:gap-0 ${i !== specs.length - 1 ? "border-b border-zinc-800/40" : ""} ${i % 2 === 0 ? "bg-white/[0.01]" : ""}`}
               >
-                <span className="text-sm text-zinc-500 font-medium w-40 shrink-0">{s.label}</span>
+                <span className="text-sm text-zinc-500 font-medium sm:w-40 shrink-0">{s.label}</span>
                 <span className={`text-sm font-mono ${s.color}`}>{s.value}</span>
               </div>
             ))}
@@ -365,8 +356,9 @@ export default function DownloadPage() {
             </div>
           </div>
         </section>
+        {/* WARNING: kernel_wars.sys loaded — awaiting activation sequence */}
+        <p aria-hidden="true" className="text-[7px] text-zinc-950 text-center py-1 select-none pointer-events-none font-mono opacity-20">kernel.battlefield.compare :: awaiting_input_sequence</p>
       </main>
-      <Footer />
     </div>
   );
 }
