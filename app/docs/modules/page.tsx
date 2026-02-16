@@ -4,7 +4,6 @@ import PageHeader from "@/helix-wiki/components/PageHeader";
 import Section from "@/helix-wiki/components/Section";
 import RustCode from "@/helix-wiki/components/RustCode";
 import InfoTable from "@/helix-wiki/components/InfoTable";
-import Footer from "@/helix-wiki/components/Footer";
 import { useI18n } from "@/helix-wiki/lib/i18n";
 import { getDocString } from "@/helix-wiki/lib/docs-i18n";
 import modulesContent from "@/helix-wiki/lib/docs-i18n/modules";
@@ -18,7 +17,7 @@ export default function ModulesPage() {
       <PageHeader title={d("header.title")} subtitle={d("header.subtitle")} badge={d("header.badge")} gradient="from-violet-400 to-purple-500" />
 
       {/* ── PHILOSOPHY ── */}
-      <Section title="Philosophy" id="philosophy">
+      <Section title={d("section.philosophy")} id="philosophy">
         <p>{d("philosophy.intro")}</p>
         <div className="grid md:grid-cols-2 gap-4 mt-6">
           <div className="bg-zinc-900/40 border border-zinc-800/40 rounded-xl p-5">
@@ -45,7 +44,7 @@ export default function ModulesPage() {
       </Section>
 
       {/* ── CORE TYPES ── */}
-      <Section title="Core Types" id="types">
+      <Section title={d("section.types")} id="types">
         <p>{d("types.intro")}</p>
         <RustCode filename="modules/src/lib.rs">{`pub struct ModuleId(u64);  // Auto-incrementing atomic counter
 
@@ -101,7 +100,7 @@ pub enum ModuleError {
       </Section>
 
       {/* ── METADATA ── */}
-      <Section title="Module Metadata" id="metadata">
+      <Section title={d("section.metadata")} id="metadata">
         <p>{d("metadata.intro")}</p>
         <RustCode filename="modules/src/metadata.rs">{`pub struct ModuleMetadata {
     pub name: String,
@@ -136,7 +135,7 @@ impl AbiVersion {
       </Section>
 
       {/* ── MODULE TRAIT ── */}
-      <Section title="Module Trait" id="trait">
+      <Section title={d("section.trait")} id="trait">
         <p>{d("trait.intro")}</p>
         <RustCode filename="modules/src/lib.rs">{`pub trait Module: Send + Sync {
     /// Return this module's metadata.
@@ -185,7 +184,7 @@ pub struct ModuleMessage {
       </Section>
 
       {/* ── REGISTRY ── */}
-      <Section title="Module Registry" id="registry">
+      <Section title={d("section.registry")} id="registry">
         <p>{d("registry.intro")}</p>
         <RustCode filename="modules/src/registry.rs">{`pub struct ModuleRegistry {
     modules: BTreeMap<ModuleId, ModuleEntry>,
@@ -232,7 +231,7 @@ impl ModuleRegistry {
       </Section>
 
       {/* ── DEFINE MACRO ── */}
-      <Section title="define_module! Macro" id="macro">
+      <Section title={d("section.macro")} id="macro">
         <p>{d("macro.intro")}</p>
         <RustCode filename="modules/src/lib.rs">{`/// Declare a module with all its metadata in one block.
 define_module! {
@@ -253,7 +252,7 @@ define_module! {
       </Section>
 
       {/* ── LIFECYCLE ── */}
-      <Section title="Module Lifecycle" id="lifecycle">
+      <Section title={d("section.lifecycle")} id="lifecycle">
         <p>{d("lifecycle.intro")}</p>
         <StateMachine
           title="Module Lifecycle State Machine"
@@ -326,7 +325,7 @@ define_module! {
       </Section>
 
       {/* ── EXAMPLE ── */}
-      <Section title="Example: Round-Robin Scheduler" id="example">
+      <Section title={d("section.example")} id="example">
         <p>{d("example.intro")}</p>
         <RustCode filename="modules_impl/schedulers/round_robin/src/lib.rs">{`pub struct RoundRobinScheduler {
     ready_queue: VecDeque<ThreadId>,
@@ -403,7 +402,6 @@ impl Scheduler for RoundRobinScheduler {
 }`}</RustCode>
       </Section>
 
-      <Footer />
     </div>
   );
 }
