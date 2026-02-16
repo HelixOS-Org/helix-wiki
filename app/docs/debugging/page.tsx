@@ -4,7 +4,7 @@ import PageHeader from "@/helix-wiki/components/PageHeader";
 import Section from "@/helix-wiki/components/Section";
 import RustCode from "@/helix-wiki/components/RustCode";
 import InfoTable from "@/helix-wiki/components/InfoTable";
-import Footer from "@/helix-wiki/components/Footer";
+import LayerStack from "@/helix-wiki/components/diagrams/LayerStack";
 import { useI18n } from "@/helix-wiki/lib/i18n";
 import { getDocString } from "@/helix-wiki/lib/docs-i18n";
 import debuggingContent from "@/helix-wiki/lib/docs-i18n/debugging";
@@ -21,35 +21,23 @@ export default function DebuggingPage() {
       />
 
       {/* ── OVERVIEW ── */}
-      <Section title="Debugging Architecture" id="overview">
+      <Section title={d("section.arch")} id="overview">
         <p>Helix&apos;s debugging infrastructure has three layers that work together:</p>
-        <RustCode filename="Debug Architecture" language="text">{`┌─────────────────────────────────────────────────────────┐
-│                     HOST SYSTEM                          │
-│                                                          │
-│  ┌────────────┐    ┌────────────┐    ┌────────────┐     │
-│  │    GDB     │    │  Serial    │    │ Log Files  │     │
-│  │ (debugger) │    │  Terminal  │    │            │     │
-│  └─────┬──────┘    └─────┬──────┘    └────────────┘     │
-│        │ TCP:1234        │ stdio          ▲              │
-├────────┼─────────────────┼───────────────┼──────────────┤
-│        ▼                 ▼               │              │
-│  ┌──────────────────────────────────────────────┐       │
-│  │                   QEMU                        │       │
-│  │  GDB Server ←→ Serial Port ←→ Log Output     │       │
-│  └──────────────────────────────────────────────┘       │
-│        │                 │               │              │
-├────────┼─────────────────┼───────────────┼──────────────┤
-│        ▼                 ▼               ▼              │
-│  ┌──────────────────────────────────────────────┐       │
-│  │              HELIX KERNEL                     │       │
-│  │  Breakpoints   serial_print!   Debug Logs     │       │
-│  │  Watchpoints   serial_println  Trace Events   │       │
-│  └──────────────────────────────────────────────┘       │
-└─────────────────────────────────────────────────────────┘`}</RustCode>
+        <LayerStack title="Debug Architecture" layers={[
+          { label: "Host System (GDB, Serial Terminal, Log Files)", detail: "Developer", color: "blue",
+            description: "Developer's host machine running GDB for breakpoints/watchpoints, a serial terminal for kernel output, and log files for persistent trace capture.",
+            info: { components: ["GDB Debugger", "Serial Terminal", "Log Files"], metrics: [{ label: "Port", value: "TCP:1234", color: "#4A90E2" }, { label: "I/O", value: "stdio" }], api: ["gdb connect :1234", "minicom /dev/pts/*"], status: "active" } },
+          { label: "QEMU (GDB Server ↔ Serial Port ↔ Log Output)", detail: "Emulator", color: "purple",
+            description: "QEMU acts as the bridge — its built-in GDB server allows step debugging, serial port emulation provides kernel console output, and log output captures trace events.",
+            info: { components: ["GDB Server", "Serial Port Emulation", "Log Output"], metrics: [{ label: "Arch", value: "x86_64", color: "#7B68EE" }, { label: "Debug", value: "-s -S" }], api: ["qemu-system-x86_64 -s -S", "-serial stdio", "-d int,cpu_reset"], status: "active" } },
+          { label: "Helix Kernel (Breakpoints, serial_print!, Debug Logs)", detail: "Target", color: "green",
+            description: "The kernel under debug — compiled with DWARF symbols, runtime serial_print!/kprintln! macros, watchpoints for memory access tracking, and trace event instrumentation.",
+            info: { components: ["Breakpoints", "Watchpoints", "serial_print!", "serial_println!", "Debug Logs", "Trace Events"], metrics: [{ label: "Symbols", value: "DWARF", color: "#22C55E" }, { label: "Panic", value: "abort" }], api: ["serial_print!()", "serial_println!()", "kdebug!()", "kinfo!()", "kwarn!()"], status: "active" } },
+        ]} />
       </Section>
 
       {/* ── DEBUG BUILD ── */}
-      <Section title="Debug Build Configuration" id="build">
+      <Section title={d("section.debug_build")} id="build">
         <p>{d("debug_build.intro")}</p>
         <RustCode filename="Cargo.toml" language="toml">{`[profile.dev]
 opt-level = 0           # No optimization — accurate debugging
@@ -81,7 +69,7 @@ cargo build --features "debug,trace-scheduling,trace-memory"`}</RustCode>
       </Section>
 
       {/* ── SERIAL CONSOLE ── */}
-      <Section title="Serial Console" id="serial">
+      <Section title={d("section.serial")} id="serial">
         <p>{d("serial.intro")}</p>
 
         <h3 className="text-xl font-semibold text-white mt-8 mb-4">Debug Macros</h3>
@@ -123,7 +111,7 @@ serial_println!("[WARN] Page fault at {:#x}", fault_addr);`}</RustCode>
       </Section>
 
       {/* ── QEMU DEBUGGING ── */}
-      <Section title="QEMU Debugging" id="qemu">
+      <Section title={d("section.qemu")} id="qemu">
         <p>{d("qemu.intro")}</p>
 
         <RustCode filename="terminal" language="bash">{`# Basic debugging output
@@ -169,7 +157,7 @@ qemu-system-x86_64 -cdrom helix.iso -m 128M \\
       </Section>
 
       {/* ── GDB ── */}
-      <Section title="GDB Integration" id="gdb">
+      <Section title={d("section.gdb")} id="gdb">
         <p>{d("gdb.intro")}</p>
 
         <h3 className="text-xl font-semibold text-white mt-8 mb-4">Setup</h3>
@@ -232,7 +220,7 @@ break _panic_handler`}</RustCode>
       </Section>
 
       {/* ── CRASH ANALYSIS ── */}
-      <Section title="Crash Analysis" id="crash">
+      <Section title={d("section.crash")} id="crash">
         <p>{d("crash.intro")}</p>
 
         <RustCode filename="Panic Output Example" language="text">{`╔══════════════════════════════════════════════════╗
@@ -281,7 +269,7 @@ break _panic_handler`}</RustCode>
       </Section>
 
       {/* ── MEMORY DEBUGGING ── */}
-      <Section title="Memory Debugging" id="memory">
+      <Section title={d("section.memory")} id="memory">
         <p>{d("memory_debug.intro")}</p>
 
         <div className="grid md:grid-cols-2 gap-4">
@@ -305,7 +293,7 @@ break _panic_handler`}</RustCode>
       </Section>
 
       {/* ── TOOLS ── */}
-      <Section title="Binary Tools" id="tools">
+      <Section title={d("section.tools")} id="tools">
         <p>{d("tools.intro")}</p>
         <RustCode filename="terminal" language="bash">{`# Show kernel sections and sizes
 size build/output/helix-kernel
@@ -326,7 +314,6 @@ readelf -l build/output/helix-kernel
 readelf --debug-dump=info build/output/helix-kernel | head -20`}</RustCode>
       </Section>
 
-      <Footer />
     </div>
   );
 }
