@@ -4,7 +4,6 @@ import PageHeader from "@/helix-wiki/components/PageHeader";
 import Section from "@/helix-wiki/components/Section";
 import RustCode from "@/helix-wiki/components/RustCode";
 import InfoTable from "@/helix-wiki/components/InfoTable";
-import Footer from "@/helix-wiki/components/Footer";
 import { useI18n } from "@/helix-wiki/lib/i18n";
 import { getDocString } from "@/helix-wiki/lib/docs-i18n";
 import luminaContent from "@/helix-wiki/lib/docs-i18n/lumina";
@@ -20,7 +19,7 @@ export default function LuminaPage() {
       <PageHeader title={d("header.title")} subtitle={d("header.subtitle")} badge={d("header.badge")} gradient="from-pink-400 to-rose-500" />
 
       {/* ── OVERVIEW ── */}
-      <Section title="Architecture Overview" id="overview">
+      <Section title={d("section.overview")} id="overview">
         <p>{d("overview.intro")}</p>
 
         <LayerStack layers={[
@@ -52,7 +51,7 @@ export default function LuminaPage() {
       </Section>
 
       {/* ── SUB-CRATES ── */}
-      <Section title="Sub-Crate Inventory" id="crates">
+      <Section title={d("section.inventory")} id="crates">
         <p>{d("inventory.intro")}</p>
         <InfoTable
           columns={[
@@ -80,7 +79,7 @@ export default function LuminaPage() {
       </Section>
 
       {/* ── CORE ── */}
-      <Section title="Core Handle System" id="handles">
+      <Section title={d("section.handles")} id="handles">
         <p>{d("handles.intro")}</p>
         <RustCode filename="graphics/lumina/lumina-core/src/lib.rs">{`/// 64-bit generational handle:
 /// [  32-bit index  |  32-bit generation  ]
@@ -131,7 +130,7 @@ impl<T> Pool<T> {
       </Section>
 
       {/* ── MATH ── */}
-      <Section title="Math Library" id="math">
+      <Section title={d("section.math")} id="math">
         <p>{d("math.intro")}</p>
         <RustCode filename="graphics/lumina/lumina-math/src/lib.rs">{`#[repr(C)]
 pub struct Vec2 { pub x: f32, pub y: f32 }
@@ -175,7 +174,7 @@ impl Transform {
       </Section>
 
       {/* ── PIPELINE ── */}
-      <Section title="Render Pipeline" id="pipeline">
+      <Section title={d("section.pipeline")} id="pipeline">
         <p>{d("pipeline.intro")}</p>
         <RustCode filename="graphics/lumina/lumina-pipeline/src/lib.rs">{`pub struct GraphicsPipeline {
     pub vertex_input: VertexInputState,
@@ -250,7 +249,7 @@ pub struct ComputePipeline {
       </Section>
 
       {/* ── RENDER GRAPH ── */}
-      <Section title="Render Graph" id="rendergraph">
+      <Section title={d("section.rendergraph")} id="rendergraph">
         <p>{d("rendergraph.intro")}</p>
         <RustCode filename="graphics/lumina/lumina-render/src/graph.rs">{`pub struct RenderGraph {
     passes: Vec<RenderPass>,
@@ -316,7 +315,7 @@ impl RenderGraph {
       </Section>
 
       {/* ── SHADERS ── */}
-      <Section title="Shader Compilation" id="shaders">
+      <Section title={d("section.shaders")} id="shaders">
         <p>{d("shaders.intro")}</p>
         <RustCode filename="graphics/lumina/lumina-shader/src/lib.rs">{`pub struct ShaderSource {
     pub source: String,
@@ -439,7 +438,7 @@ pub enum IrType {
       </Section>
 
       {/* ── MAGMA ── */}
-      <Section title="Magma GPU Driver" id="magma">
+      <Section title={d("section.magma")} id="magma">
         <p>{d("magma.intro")}</p>
         <InfoTable
           columns={[
@@ -508,7 +507,7 @@ impl GpuDevice {
       </Section>
 
       {/* ── SYNC ── */}
-      <Section title="GPU Synchronization" id="sync">
+      <Section title={d("section.sync")} id="sync">
         <p>GPU synchronization primitives for CPU-GPU and GPU-GPU coordination:</p>
         <RustCode filename="graphics/lumina/lumina-sync/src/lib.rs">{`/// CPU-GPU synchronization. Signal from GPU, wait on CPU.
 pub struct Fence {
@@ -566,7 +565,7 @@ bitflags! {
       </Section>
 
       {/* ── SCALE ── */}
-      <Section title="Codebase Scale" id="scale">
+      <Section title={d("section.scale")} id="scale">
         <div className="mt-2 bg-gradient-to-r from-pink-500/10 to-rose-500/10 border border-pink-500/20 rounded-xl p-5">
           <p className="text-lg font-semibold text-white mb-1">197,473 lines · 282 files · 14 sub-crates + Magma driver</p>
           <p className="text-sm text-zinc-400">Lumina is built entirely in <code className="text-helix-blue">no_std</code> Rust. It includes its own math library, shader compiler, IR optimizer, SPIR-V emitter, render graph, and GPU driver — with zero external graphics dependencies.</p>
@@ -619,7 +618,6 @@ bitflags! {
         ]} />
       </Section>
 
-      <Footer />
     </div>
   );
 }
