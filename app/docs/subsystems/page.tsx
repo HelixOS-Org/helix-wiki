@@ -4,7 +4,6 @@ import PageHeader from "@/helix-wiki/components/PageHeader";
 import Section from "@/helix-wiki/components/Section";
 import RustCode from "@/helix-wiki/components/RustCode";
 import InfoTable from "@/helix-wiki/components/InfoTable";
-import Footer from "@/helix-wiki/components/Footer";
 import { useI18n } from "@/helix-wiki/lib/i18n";
 import { getDocString } from "@/helix-wiki/lib/docs-i18n";
 import subsystemsContent from "@/helix-wiki/lib/docs-i18n/subsystems";
@@ -19,7 +18,7 @@ export default function SubsystemsPage() {
       <PageHeader title={d("header.title")} subtitle={d("header.subtitle")} badge={d("header.badge")} gradient="from-orange-400 to-rose-500" />
 
       {/* ── MEMORY ── */}
-      <Section title="Memory Subsystem" id="memory">
+      <Section title={d("section.memory")} id="memory">
         <p>{d("memory.intro")}</p>
 
         <h3 className="text-xl font-semibold text-white mt-8 mb-4">{d("memory.errors.title")}</h3>
@@ -129,7 +128,7 @@ pub struct BumpAllocator {
       </Section>
 
       {/* ── EXECUTION ── */}
-      <Section title="Execution Subsystem" id="execution">
+      <Section title={d("section.execution")} id="execution">
         <p>{d("execution.intro")}</p>
 
         <RustCode filename="subsystems/execution/src/lib.rs">{`pub struct ThreadId(AtomicU64);   // Auto-incrementing, unique
@@ -218,7 +217,7 @@ pub struct SchedulerStats {
       </Section>
 
       {/* ── DIS ── */}
-      <Section title="DIS — Dynamic Intent Scheduler" id="dis">
+      <Section title={d("section.dis")} id="dis">
         <p>{d("dis.intro")}</p>
 
         <RustCode filename="subsystems/dis/src/intent.rs">{`pub enum IntentClass {
@@ -341,7 +340,7 @@ impl DisScheduler {
       </Section>
 
       {/* ── INIT ── */}
-      <Section title="Init Framework" id="init">
+      <Section title={d("section.init")} id="init">
         <p>{d("init.intro")}</p>
 
         <RustCode filename="subsystems/init/src/lib.rs">{`pub const MAX_SUBSYSTEMS: usize = 512;
@@ -446,7 +445,7 @@ pub fn is_initialized() -> bool;`}</RustCode>
       </Section>
 
       {/* ── RELOCATION ── */}
-      <Section title="Relocation Subsystem" id="relocation">
+      <Section title={d("section.relocation")} id="relocation">
         <p>{d("relocation.intro")}</p>
         <RustCode filename="subsystems/relocation/src/lib.rs">{`pub enum RelocError {
     InvalidElfMagic,
@@ -493,7 +492,7 @@ pub enum BootProtocol {
       </Section>
 
       {/* ── USERSPACE ── */}
-      <Section title="Userspace Subsystem" id="userspace">
+      <Section title={d("section.userspace")} id="userspace">
         <p>{d("userspace.intro")}</p>
         <RustCode filename="subsystems/userspace/src/lib.rs">{`pub enum UserError {
     ElfError(ElfError),
@@ -536,7 +535,7 @@ pub struct UserspaceCapabilities {
       </Section>
 
       {/* ── EARLY BOOT ── */}
-      <Section title="Early Boot Subsystem" id="earlyboot">
+      <Section title={d("section.earlyboot")} id="earlyboot">
         <p>{d("earlyboot.intro")}</p>
         <RustCode filename="boot/src/lib.rs">{`pub struct BootConfig {
     pub kaslr_enabled: bool,          // default: true
@@ -600,7 +599,6 @@ bitflags! {
         </div>
       </Section>
 
-      <Footer />
     </div>
   );
 }
