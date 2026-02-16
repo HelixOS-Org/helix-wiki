@@ -4,7 +4,8 @@ import PageHeader from "@/helix-wiki/components/PageHeader";
 import Section from "@/helix-wiki/components/Section";
 import RustCode from "@/helix-wiki/components/RustCode";
 import InfoTable from "@/helix-wiki/components/InfoTable";
-import Footer from "@/helix-wiki/components/Footer";
+import LayerStack from "@/helix-wiki/components/diagrams/LayerStack";
+import FlowDiagram from "@/helix-wiki/components/diagrams/FlowDiagram";
 import { useI18n } from "@/helix-wiki/lib/i18n";
 import { getDocString } from "@/helix-wiki/lib/docs-i18n";
 import driversContent from "@/helix-wiki/lib/docs-i18n/drivers";
@@ -21,37 +22,27 @@ export default function DriversPage() {
       />
 
       {/* ── OVERVIEW ── */}
-      <Section title="Driver Architecture" id="overview">
+      <Section title={d("section.arch")} id="overview">
         <p>{d("arch.intro")}</p>
 
-        <RustCode filename="Driver Architecture" language="text">{`┌─────────────────────────────────────────────────────────┐
-│                    User Space / Modules                   │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐              │
-│  │Filesystem│  │ Graphics │  │ Network  │              │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘              │
-├───────┼──────────────┼──────────────┼────────────────────┤
-│       ▼              ▼              ▼                    │
-│  ┌──────────────────────────────────────────────┐       │
-│  │              Driver Framework                 │       │
-│  │  ┌────────┐  ┌────────┐  ┌────────┐         │       │
-│  │  │ Block  │  │  GPU   │  │  Net   │  ...    │       │
-│  │  │ Driver │  │ Driver │  │ Driver │         │       │
-│  │  └───┬────┘  └───┬────┘  └───┬────┘         │       │
-│  └──────┼────────────┼────────────┼──────────────┘       │
-│         ▼            ▼            ▼                      │
-│  ┌──────────────────────────────────────────────┐       │
-│  │                    HAL                        │       │
-│  │  PCI/MMIO  ·  Port I/O  ·  DMA  ·  IRQ      │       │
-│  └──────────────────────────────────────────────┘       │
-│         ▼            ▼            ▼                      │
-│  ┌──────────────────────────────────────────────┐       │
-│  │                 Hardware                      │       │
-│  └──────────────────────────────────────────────┘       │
-└─────────────────────────────────────────────────────────┘`}</RustCode>
+        <LayerStack title="Driver Architecture" layers={[
+          { label: "User Space / Modules (Filesystem, Graphics, Network)", detail: "Applications", color: "purple",
+            description: "User-facing modules that consume driver services — filesystem operations, GPU rendering, and network I/O all route through the driver framework.",
+            info: { components: ["Filesystem Module", "Graphics Module", "Network Module"], metrics: [{ label: "Modules", value: "12+", color: "#7B68EE" }], api: ["open()", "read()", "write()", "ioctl()"], status: "active" } },
+          { label: "Driver Framework (Block, GPU, Net, ...)", detail: "Abstraction", color: "blue",
+            description: "Trait-based driver framework providing unified interfaces for block devices, GPU, network, input, and character devices. Drivers implement DeviceTrait and register via the module system.",
+            info: { components: ["Block Driver", "GPU Driver", "Net Driver", "Input Driver"], metrics: [{ label: "Traits", value: "5", color: "#4A90E2" }, { label: "Hot-Swap", value: "Yes", color: "#22C55E" }], api: ["DeviceTrait::probe()", "DeviceTrait::init()", "register_driver()"], status: "active" } },
+          { label: "HAL (PCI/MMIO · Port I/O · DMA · IRQ)", detail: "Hardware Access", color: "amber",
+            description: "Hardware Abstraction Layer providing safe wrappers for PCI enumeration, MMIO register access, port I/O, DMA buffer management, and interrupt registration.",
+            info: { components: ["PCI Enumerator", "MMIO Mapper", "Port I/O", "DMA Engine", "IRQ Router"], metrics: [{ label: "Access", value: "Safe", color: "#F59E0B" }], api: ["pci::find_device()", "mmio_read()", "port_write()", "dma_alloc()"], status: "active" } },
+          { label: "Hardware (Physical Devices)", detail: "Silicon", color: "zinc",
+            description: "Physical hardware — GPUs, NICs, storage controllers, USB hosts, and other peripherals connected via PCI, MMIO, or platform buses.",
+            info: { components: ["GPU", "NIC", "Storage", "USB", "Serial"], metrics: [{ label: "Bus", value: "PCI/MMIO" }], status: "passive" } },
+        ]} />
       </Section>
 
       {/* ── MAGMA ── */}
-      <Section title="Magma GPU Driver" id="magma">
+      <Section title={d("section.magma")} id="magma">
         <p>{d("magma.intro")}</p>
 
         <h3 className="text-xl font-semibold text-white mt-8 mb-4">Crate Structure</h3>
@@ -113,14 +104,26 @@ pub fn init_gpu() -> Result<GpuDevice, MagmaError> {
         <p>{d("pipeline.intro")}</p>
 
         <h3 className="text-xl font-semibold text-white mt-8 mb-4">Command Buffer Pipeline</h3>
-        <RustCode filename="Command Submission" language="text">{`┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐
-│  Build   │ ──▶ │  Submit  │ ──▶ │   GPU    │ ──▶ │ Complete │
-│ Commands │     │ to Ring  │     │ Executes │     │  Fence   │
-└──────────┘     └──────────┘     └──────────┘     └──────────┘
-    CPU              CPU              GPU              IRQ
-
-// API usage:
-let mut cmd = CommandBuffer::new(&device);
+        <FlowDiagram
+          title="Command Submission Pipeline"
+          phases={[
+            { title: "Build", color: "blue", description: "CPU records draw calls, state changes, and resource bindings into a command buffer.", nodes: [
+              { label: "Bind Pipeline", color: "blue", info: { description: "Select graphics/compute pipeline with shaders and fixed-function state.", duration: "~50ns", priority: "high", outputs: ["Pipeline state"] } },
+              { label: "Bind Buffers", color: "blue", info: { description: "Attach vertex, index, and uniform buffers to the command stream.", duration: "~30ns", priority: "normal" } },
+              { label: "Draw Call", color: "blue", info: { description: "Record the draw command with vertex range and instance count.", duration: "~20ns", priority: "normal", outputs: ["CommandBuffer"] } },
+            ]},
+            { title: "Submit", color: "purple", description: "CPU submits the filled command buffer to the GPU ring buffer.", nodes: [
+              { label: "Ring Insert", color: "purple", info: { description: "Write command buffer pointer into the GPU submission ring. Doorbell MMIO write triggers GPU.", duration: "~100ns", priority: "critical", outputs: ["Fence token"] } },
+            ]},
+            { title: "Execute", color: "amber", description: "GPU processes the command buffer asynchronously.", nodes: [
+              { label: "GPU Work", color: "amber", info: { description: "GPU fetches commands from ring, executes draw calls, rasterizes, and writes to render targets.", duration: "Variable", priority: "critical" } },
+            ]},
+            { title: "Complete", color: "green", description: "GPU signals completion via fence and IRQ.", nodes: [
+              { label: "Fence Signal", color: "green", info: { description: "GPU writes fence value to memory. IRQ notifies CPU. fence.wait() returns.", duration: "~1μs", priority: "high", outputs: ["Rendered frame"] } },
+            ]},
+          ]}
+        />
+        <RustCode filename="Command Submission API">{`let mut cmd = CommandBuffer::new(&device);
 cmd.bind_pipeline(&pipeline);
 cmd.bind_vertex_buffer(&vbuf);
 cmd.draw(0..vertex_count);
@@ -130,7 +133,7 @@ fence.wait()?; // Block until GPU completes`}</RustCode>
       </Section>
 
       {/* ── PLANNED DRIVERS ── */}
-      <Section title="Planned Drivers" id="planned">
+      <Section title={d("section.planned")} id="planned">
         <p>{d("planned.intro")}</p>
         <InfoTable
           columns={[
@@ -151,7 +154,7 @@ fence.wait()?; // Block until GPU completes`}</RustCode>
       </Section>
 
       {/* ── WRITING DRIVERS ── */}
-      <Section title="Writing a Driver Module" id="writing">
+      <Section title={d("section.writing")} id="writing">
         <p>{d("writing.intro")}</p>
 
         <RustCode filename="modules_impl/drivers/serial/src/lib.rs">{`#![no_std]
@@ -201,7 +204,6 @@ impl ModuleTrait for SerialDriver {
 helix_modules::define_module!(SerialDriver);`}</RustCode>
       </Section>
 
-      <Footer />
     </div>
   );
 }
